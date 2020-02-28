@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "58427443629",
+    "firebase_url": "https://spatiotemporaltraveler.firebaseio.com",
+    "project_id": "spatiotemporaltraveler",
+    "storage_bucket": "spatiotemporaltraveler.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:58427443629:android:f6fa5db0f3e17a52643924",
+        "android_client_info": {
+          "package_name": "nathanielwendt.mpc.ut.edu.paco"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "58427443629-n1qii2bulfsln2ftnoqt7er2tivph3pg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "nathanielwendt.mpc.ut.edu.paco",
+            "certificate_hash": "b75137f92ac0a65d3f59d85379ceb2be0de07b53"
+          }
+        },
+        {
+          "client_id": "58427443629-6d7l6e6oc8vs5ar9ucfqljj5vkrf6ut8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBN8RleIXPfH6I20Y0mleb8aL-fwoV_eKc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "58427443629-6d7l6e6oc8vs5ar9ucfqljj5vkrf6ut8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

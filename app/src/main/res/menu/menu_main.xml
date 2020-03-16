@@ -15,4 +15,10 @@
 
     <item android:id="@+id/action_receive_places" android:icon="@android:drawable/stat_notify_chat"
         android:title="RECEIVE MESSAGE" app:showAsAction="ifRoom" />
+
+    <item android:id="@+id/action_setting_privacy" android:icon="@android:drawable/stat_notify_chat"
+        android:title="Permission Setting" app:showAsAction="ifRoom" />
+
+<!--    <item android:id="@+id/action_request_places" android:icon="@android:drawable/stat_notify_chat"-->
+<!--        android:title="Request PoK" app:showAsAction="ifRoom" />-->
 </menu>

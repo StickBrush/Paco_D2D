@@ -102,11 +102,35 @@
             android:layout_toRightOf="@+id/query_btn"
             android:layout_toLeftOf="@+id/pin_btn"
             android:layout_alignParentBottom="true"/>
+
+<!--        <Button-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="@string/btn_set_confirm"-->
+<!--            android:id="@+id/pin_btn"-->
+<!--            android:layout_toLeftOf="@+id/request_btn"-->
+<!--            android:layout_alignParentBottom="true"/>-->
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/btn_set_confirm"
             android:id="@+id/pin_btn"
+            android:layout_toLeftOf="@+id/request_btn"
+            android:layout_alignParentBottom="true"/>
+
+<!--        <Button-->
+<!--            android:layout_width="40dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="SET"-->
+<!--            android:textSize="5dp"-->
+<!--            android:id="@+id/set_btn"-->
+<!--            android:layout_toLeftOf="@+id/request_btn"/>-->
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_request"
+            android:id="@+id/request_btn"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"/>
     </RelativeLayout>

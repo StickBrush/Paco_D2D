@@ -17,7 +17,7 @@ import org.sqlite.database.sqlite.SQLiteOpenHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 import static nathanielwendt.mpc.ut.edu.paco.utils.DBConstants.DATABASE_NAME;
 import static nathanielwendt.mpc.ut.edu.paco.utils.DBConstants.DATABASE_VERSION;
@@ -144,11 +144,11 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
             prefix = " AND ";
         }
 
-        if(mins.hasT() && maxs.hasT()){
-            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
-                    " AND maxT <= " + String.format("%f", maxs.getT());
-            prefix = " AND ";
-        }
+//        if(mins.hasT() && maxs.hasT()){
+//            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
+//                    " AND maxT <= " + String.format("%f", maxs.getT());
+//            prefix = " AND ";
+//        }
 
         Cursor cur = db.rawQuery(query, null);
 
@@ -249,8 +249,9 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
 
     public void delete(String name){
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(this.table_identifier, "placeName="+name, null);
-    }//
+        db.delete(this.table_identifier, "placeName="+name, null);//int
+//        db.delete(this.table_identifier, "placeName = ?",new String[] {name});//String
+    }////
 
     @Override
     public void onCreate(SQLiteDatabase database) {
@@ -315,4 +316,69 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
         Log.d("pointToList", list.toString());
         return list;
     }//
+
+    @Override
+    public List<PlaceData> getPlacesByRange(STRegion range) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String query = "SELECT id,minX,maxX,minY,maxY,minT,maxT,placeName,uri from " + this.table_identifier + " ";
+
+        STPoint mins = range.getMins();
+        STPoint maxs = range.getMaxs();
+
+        String prefix = " WHERE ";
+
+        if(mins.hasX() && maxs.hasX()){
+            query += prefix + " minX >= " + String.format("%f", mins.getX()) +
+                    " AND maxX <= " + String.format("%f", maxs.getX());
+            prefix = " AND ";
+        }
+
+        if(mins.hasY() && maxs.hasY()){
+            query += prefix + " minY >= " + String.format("%f", mins.getY()) +
+                    " AND maxY <= " + String.format("%f", maxs.getY());
+            prefix = " AND ";
+        }
+
+//        if(mins.hasT() && maxs.hasT()){
+//            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
+//                    " AND maxT <= " + String.format("%f", maxs.getT());
+//            prefix = " AND ";
+//        }
+
+        Cursor cur = db.rawQuery(query, null);
+
+        List<PlaceData> places = pointToList(cur);
+
+        db.close();
+
+        return places;
+    }
+
+//    private List<PlaceData> RegionPointToList(Cursor cur){
+//        List<PlaceData> list = new ArrayList<PlaceData>();
+//
+//        cur.moveToFirst();
+//        while (!cur.isAfterLast()) {
+//            int id = cur.getInt(0);
+//            float minX = cur.getFloat(1);
+//            float maxX = cur.getFloat(2);
+//            float minY = cur.getFloat(3);
+//            float maxY = cur.getFloat(4);
+//            float minT = cur.getFloat(5);
+//            float maxT = cur.getFloat(6);
+//            String placeName = cur.getString(7);
+//            String uri = cur.getString(8);
+//
+//            STPoint point = new STPoint(minX, minY, minT);
+//            STRegion bounds = new STRegion(point, point);
+//            PlaceData nextPlace = new PlaceData(placeName, uri, bounds);
+//
+//            list.add(nextPlace);
+//            cur.moveToNext();
+//        }
+//        cur.close();
+//        Log.d("pointToList", list.toString());
+//        return list;
+//    }//
 }

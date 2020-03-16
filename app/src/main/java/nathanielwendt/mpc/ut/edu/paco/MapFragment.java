@@ -46,6 +46,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private TextView minTimeLabel, maxTimeLabel;
     private int minHourOffset = -72;
     private int maxHourOffset = 0;
+    private Bundle bundle = new Bundle();//request bundle
 
     public MapFragment(){}
 
@@ -77,6 +78,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         view.findViewById(R.id.query_btn).setOnClickListener(queryBtnListener);
         view.findViewById(R.id.clear_btn).setOnClickListener(clearBtnListener);
         view.findViewById(R.id.pin_btn).setOnClickListener(pinBtnListener);
+        view.findViewById(R.id.request_btn).setOnClickListener(requestBtnListener);
+        //view.findViewById(R.id.set_btn).setOnClickListener(setBtnListener);
 
         return view;
     }
@@ -263,6 +266,46 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     };
 
+    private View.OnClickListener requestBtnListener = new View.OnClickListener(){
+        @Override
+        public void onClick(View v) {
+            LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
+            LatLng northeast = bounds.northeast;
+            LatLng southwest = bounds.southwest;
+
+            clearMap();
+
+            long nowMS = System.currentTimeMillis();
+            float minMS = nowMS + (60 * 60 * 1000 * minHourOffset); //range values should be negative, effectively subtracting
+            float maxMS = nowMS + (60 * 60 * 1000 * maxHourOffset); //range values should be negative, effectively subtracting
+
+            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
+            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
+            STRegion mapRegion = new STRegion(minPoint, maxPoint);
+
+            request(mapRegion);
+        }
+    };
+
+//    private View.OnClickListener setBtnListener = new View.OnClickListener(){
+//        @Override
+//        public void onClick(View v) {
+//            LatLngBounds bounds = map.getProjection().getVisibleRegion().latLngBounds;
+//            LatLng northeast = bounds.northeast;
+//            LatLng southwest = bounds.southwest;
+//
+//            long nowMS = System.currentTimeMillis();
+//            float minMS = nowMS + (60 * 60 * 1000 * minHourOffset); //range values should be negative, effectively subtracting
+//            float maxMS = nowMS + (60 * 60 * 1000 * maxHourOffset); //range values should be negative, effectively subtracting
+//
+//            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
+//            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
+//            STRegion mapRegion = new STRegion(minPoint, maxPoint);
+//
+//            //((MainActivity)getActivity()).getSetData().setRangeValue(mapRegion.toString());
+//        }
+//    };
+
     private String progressToLabel(int progress){
         String result;
         progress += 1;
@@ -286,5 +329,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         double windowPoK(STRegion region);
         LatLng lastLoc();
         void createPlace(STRegion region);
+    }
+
+    private void request(STRegion region){
+        bundle.putString("message", region.toString());
+        RequestFragment requestFragment = new RequestFragment();
+        requestFragment.setArguments(bundle);
+        ((MainActivity)getActivity()).getFragmentHelper().show("RequestFragment", requestFragment );
     }
 }

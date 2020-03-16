@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.sql.*;
 
-import nathanielwendt.mpc.ut.edu.paco.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 /**
  * Created by nathanielwendt on 2/19/15.
@@ -212,6 +212,10 @@ public class NativeWrapper implements STStorage {
     }
 
     public List<PlaceData> getPlaces(){
+
+        return null;
+    }//
+    public List<PlaceData> getPlacesByRange(STRegion range){
 
         return null;
     }//

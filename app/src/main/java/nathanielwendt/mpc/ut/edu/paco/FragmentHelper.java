@@ -35,6 +35,7 @@ public class FragmentHelper {
             }
 
             if(lastFragment == manager.findFragmentByTag("SendFragment") && !tag.equals("SendFragment")){ft.remove(lastFragment);}//
+            if(lastFragment == manager.findFragmentByTag("RequestFragment") && !tag.equals("RequestFragment")){ft.remove(lastFragment);}//
         }
 
         Fragment next = manager.findFragmentByTag(tag);

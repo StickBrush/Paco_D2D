@@ -1,8 +1,6 @@
 package nathanielwendt.mpc.ut.edu.paco;
 
 import android.Manifest;
-import android.app.FragmentTransaction;
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,7 +22,14 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.firebase.ui.auth.data.model.User;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -33,23 +38,23 @@ import androidx.fragment.app.Fragment;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
 
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -58,6 +63,7 @@ import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 import com.ut.mpc.setup.Initializer;
 import com.ut.mpc.utils.LSTFilter;
+import com.ut.mpc.utils.QueryWindow;
 import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 
@@ -66,25 +72,30 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 
-import nathanielwendt.mpc.ut.edu.paco.utils.PlaceStore;
+import nathanielwendt.mpc.ut.edu.paco.Data.AccessProfile;
+import nathanielwendt.mpc.ut.edu.paco.Data.NotificationData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.SettingData;
+import nathanielwendt.mpc.ut.edu.paco.Data.UserData;
+import nathanielwendt.mpc.ut.edu.paco.Data.sendData;
 import nathanielwendt.mpc.ut.edu.paco.utils.SQLiteRTree;
+import nathanielwendt.mpc.ut.edu.paco.utils.notificationStore;
 
-import static com.ut.mpc.setup.Initializer.pedDefaults;
+import static com.ut.mpc.setup.Constants.PoK.T_CUBE;
+import static com.ut.mpc.setup.Constants.PoK.X_CUBE;
+import static com.ut.mpc.setup.Constants.PoK.Y_CUBE;
 import static com.ut.mpc.setup.Initializer.vehicularDefaults;
+import static com.ut.mpc.setup.Initializer.pedDefaults;
 
 import android.location.Criteria;
 import android.location.LocationListener;
@@ -106,7 +117,17 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
-public class MainActivity extends AppCompatActivity implements PlacesFragment.OnFragmentInteractionListener,
+import com.google.android.gms.nearby.Nearby;
+import com.google.android.gms.nearby.messages.Message;
+import com.google.android.gms.nearby.messages.MessageListener;
+import com.google.android.gms.nearby.messages.MessagesClient;
+import com.google.android.gms.nearby.messages.PublishCallback;
+import com.google.android.gms.nearby.messages.PublishOptions;
+import com.google.android.gms.nearby.messages.Strategy;
+import com.google.android.gms.nearby.messages.SubscribeCallback;
+import com.google.android.gms.nearby.messages.SubscribeOptions;
+
+public class MainActivity extends AppCompatActivity implements PlacesFragment.OnFragmentInteractionListener, NotificationsFragment.OnFragmentInteractionListener,
         MapFragment.MapFragmentListener, CreatePlaceFragment.CreatePlaceFragmentDoneListener {
 
     private ViewGroup viewGroup;
@@ -119,14 +140,16 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
     private String TOOLBAR_PLAIN ;
     private boolean tracking = false;
 
-    //...//
     MqttAndroidClient client;
     private RequestQueue requestQueue;
     private Receiver Receiver;
     MqttConnectOptions options = new MqttConnectOptions();
 
-    ArrayAdapter adapter;
+    //ArrayAdapter adapter;
     ArrayList<String> isSubTopic = new ArrayList<String>();
+
+    private SettingData setData = new SettingData();
+    private AccessProfile accessProfile = new AccessProfile();////
 
     //Location
     Location location;
@@ -136,10 +159,15 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
     private String bestProvider = LocationManager.GPS_PROVIDER;
     private static final int REQUEST_FINE_LOCATION_PERMISSION = 102;
 
+    //User
     String clientID;
+    private UserData user = new UserData();
+    private FirebaseDatabase mDatabase = FirebaseDatabase.getInstance();
+    //private DatabaseReference mDatabaseReference = mDatabase.getReference().child("user");
+    private DatabaseReference mDatabaseReference;
 
-    //private LSTFilter filter;
-    public LSTFilter filter;//
+    private LSTFilter filter;
+//    public LSTFilter filter;//
 
     static {
         System.loadLibrary("sqliteX");
@@ -147,12 +175,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-////        super.onCreate(savedInstanceState);
-//        Initializer initializer = pedDefaults();//
-////        setContentView(R.layout.activity_main);
-//        toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-
         //Location
         LocationManager status = (LocationManager) (this.getSystemService(Context.LOCATION_SERVICE));
         if(status.isProviderEnabled(LocationManager.GPS_PROVIDER)|| status.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
@@ -167,11 +189,11 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         }
         // onCreate
 
-
         FirebaseApp.initializeApp(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        adapter = new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1);
+        //SharedPreferences sharedpreferences = this.getSharedPreferences("notification", Context.MODE_PRIVATE);
+        //adapter = new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1);
 
         Receiver=new Receiver();
 
@@ -189,14 +211,28 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                             return;
                         }
                         String FirebaseToken = task.getResult().getToken();
-                        Log.d("token", FirebaseToken);
+
+                        //For nearby User Search
+                        user.setTokenID(FirebaseToken);
+                        user.setLastLocation(currentLocation);
+                        mDatabaseReference = mDatabase.getReference().child("user").child(FirebaseToken);
+                        mDatabaseReference.setValue(user);
+
+                        SharedPreferences sharedpreferences = getBaseContext().getSharedPreferences("token", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedpreferences.edit();
+                        String key = "token";
+                        String data = FirebaseToken;
+                        Log.d("LST", "putting shared prefs name: " + key + " data: " + data);
+                        editor.putString(key, data);
+                        editor.commit();
+
                         PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("TOKEN", FirebaseToken).apply();
                         String clientId = FirebaseToken;
 
                         //MQTT Client
                         clientID = clientId;
                         final String url = "tcp://192.168.0.104";
-//                        final String url = "tcp://10.145.5.82";
+//                        final String url = "tcp://10.147.88.144";
                         client =
                                 new MqttAndroidClient(MainActivity.this, url, clientId);
 
@@ -229,46 +265,33 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                             }
 
                             @Override
-                            public void messageArrived(String topic, MqttMessage message) throws Exception {
+                            public void messageArrived(String topic, MqttMessage MQTTmessage) throws Exception {
                                 //String currentToken = tokenView.getText().toString();
                                 String currentToken = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("TOKEN", "defaultStringIfNothingFound");//
 
-                                String msg = new String(message.getPayload());
-                                JSONObject temp_jsonMessage = new JSONObject(msg);
-                                JSONObject jsonMessage = new JSONObject();
-                                String receiverToken = temp_jsonMessage.get("to").toString();
+                                String message = new String(MQTTmessage.getPayload());
 
-                                jsonMessage = temp_jsonMessage.getJSONObject("data");
-                                JSONObject jsonParam = jsonMessage.getJSONObject("params");
-                                JSONObject jsonToken = jsonMessage.getJSONObject("Token");
-                                String senderToken = jsonToken.get("SenderToken").toString();
+                                //HaldleMQTTMessage(message, currentToken);
+                                DateFormat df = new SimpleDateFormat("MMM d, yyyy HH:mm:ss");
+                                String ts = df.format(new Date());
 
-                                if(receiverToken.equals(currentToken)){
-                                    if(!senderToken.equals(currentToken)){
-                                        String title = jsonParam.get("title").toString();
-                                        String description = jsonParam.get("description").toString();
-                                        String image = jsonParam.get("image").toString();
-                                        String final_msg = "Title: " + title +"\n" + "Description: " + description /*+"\n" + "Latitude: " + latitude +"\n" + "Longitude: " + longitude*/;
-                                        adapter.add(final_msg);
-                                        //update data
-                                        updateList(title, description, image);
+                                JSONObject jsonData = new JSONObject(message);
+                                JSONObject json_data = jsonData.getJSONObject("data");
+                                JSONObject json_stage = json_data.getJSONObject("Stage");
+                                String Stage = json_stage.get("CurrStage").toString();
 
-                                        //send back Location
-                                        temp_jsonMessage.put("Location", currentLocation);
-                                        temp_jsonMessage.put("to", senderToken);
-                                        String sendBackData = temp_jsonMessage.toString();
-                                        sendMQTT(sendBackData);
-                                    }
-                                    //senderToken == currentToken
-                                    else{
-                                        String Location = temp_jsonMessage.get("Location").toString();
-                                        String fireBase_msg = /*"Send notification to: " + receiver_token + "\n" +*/ "Receiver Location: " + Location +"\n";
-                                        adapter.add(fireBase_msg);
-                                    }
-                                }
-                                else{
+                                sendData SendData = new sendData();
+                                SendData.setTimeStamp(ts);
+                                SendData.setStage(Integer.parseInt(Stage));
+                                SendData.setMessage(message);
 
-                                }
+                                //updateNotificationList(SendData.HandleMQTTData());
+                                String not1 =  SendData.HandleMQTTData().get(0);
+                                String not2 =  SendData.HandleMQTTData().get(1);
+                                String[] not = {not1, not2};
+                                updateNotificationList(not);
+                                //check Permission
+                                //updateList(title, description, image);
 
                             }
 
@@ -314,53 +337,159 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         fHelper.show("PlacesFragment", new PlacesFragment(), true);
     }
 
+//    @Override
+//    public void onStart() {
+//        super.onStart();
+//
+//        Nearby.getMessagesClient(this).publish(mMessage);
+//        Nearby.getMessagesClient(this).subscribe(mMessageListener);
+//    }
+//
+//    @Override
+//    public void onStop() {
+//        Nearby.getMessagesClient(this).unpublish(mMessage);
+//        Nearby.getMessagesClient(this).unsubscribe(mMessageListener);
+//
+//        super.onStop();
+//    }
+//
+//    private void signIn() {
+//        // Launches the sign in flow, the result is returned in onActivityResult
+//        Intent intent = mGoogleSignInClient.getSignInIntent();
+//        startActivityForResult(intent, RC_SIGN_IN);
+//    }
+//
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//
+//        if (requestCode == RC_SIGN_IN) {
+//            Task<GoogleSignInAccount> task =
+//                    GoogleSignIn.getSignedInAccountFromIntent(data);
+//            if (task.isSuccessful()) {
+//                // Sign in succeeded, proceed with account
+//                GoogleSignInAccount acct = task.getResult();
+//            } else {
+//                // Sign in failed, handle failure and update UI
+//                // ...
+//            }
+//        }
+//    }
+//
+////    private void buildGoogleApiClient() {
+////        if (mGoogleApiClient != null) {
+////            return;
+////        }
+////        mGoogleApiClient = new GoogleApiClient.Builder(this)
+////                .addApi(Nearby.MESSAGES_API)
+////                .addConnectionCallbacks(this)
+////                .enableAutoManage(this, this)
+////                .build();
+////    }
+//
+//    /**
+//     * Publishes a message to nearby devices and updates the UI if the publication either fails or
+//     * TTLs.
+//     */
+//    private void publish() {
+//        Log.i(TAG, "Publishing");
+//        PublishOptions options = new PublishOptions.Builder()
+//                .setStrategy(PUB_SUB_STRATEGY)
+//                .setCallback(new PublishCallback() {
+//                    @Override
+//                    public void onExpired() {
+//                        super.onExpired();
+//                        Log.i(TAG, "No longer publishing");
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                //mPublishSwitch.setChecked(false);
+//                            }
+//                        });
+//                    }
+//                }).build();
+//
+//        Nearby.Messages.publish( mGoogleApiClient, mPubMessage, options)
+//                .setResultCallback(new ResultCallback<Status>() {
+//                    @Override
+//                    public void onResult(@NonNull Status status) {
+//                        if (status.isSuccess()) {
+//                            Log.i(TAG, "Published successfully.");
+//                        } else {
+//                            //logAndShowSnackbar("Could not publish, status = " + status);
+//                            //mPublishSwitch.setChecked(false);
+//                        }
+//                    }
+//                });
+//    }
+//    /**
+//     * Stops publishing message to nearby devices.
+//     */
+//    private void unpublish() {
+//        Log.i(TAG, "Unpublishing.");
+//        Nearby.Messages.unpublish(mGoogleApiClient, mPubMessage);
+//    }
+
     //Receive notification from FireBase
     private class Receiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String message = intent.getStringExtra("FirebaseData");
-            //Receiver(phone 2) receiving post request from phone 1 & send back location information
+            DateFormat df = new SimpleDateFormat("MMM d, yyyy HH:mm:ss");
+            String ts = df.format(new Date());
+
             try {
+                String message = intent.getStringExtra("FirebaseData");
                 JSONObject jsonData = new JSONObject(message);
+                JSONObject json_stage = jsonData.getJSONObject("Stage");
+                String Stage = json_stage.get("CurrStage").toString();
 
-                JSONObject jsonParam = jsonData.getJSONObject("params");
-                String title = jsonParam.get("title").toString();
-                String description = jsonParam.get("description").toString();
-                String image = jsonParam.get("image").toString();
-                String fireBase_msg = "Title: " + title +"\n" + "Description: " + description;
-                adapter.add(fireBase_msg);
-                Log.d("image", image);
-                updateList(title, description, image);
+                sendData SendData = new sendData();
+                SendData.setTimeStamp(ts);
+                SendData.setStage(Integer.parseInt(Stage));
+                SendData.setMessage(message);
 
-                JSONObject locationJson = new JSONObject();
-                JSONObject locationJson2 = new JSONObject();
-                JSONObject sendBackJson = new JSONObject();
+                //check Permission
+                if(SendData.getStage() == 1){
+                    String not1 =  SendData.HandleFireData().get(0);
+                    String not2 =  SendData.HandleFireData().get(1);
+                    String[] not = {not1, not2};
+                    updateNotificationList(not);
 
-                JSONObject jsonToken = jsonData.getJSONObject("Token");
-                String SenderToken = jsonToken.get("SenderToken").toString();
-                locationJson.put("Location", currentLocation);
-                locationJson2.put("SendBackLocation", locationJson);
-                sendBackJson.put("to", SenderToken);
-                sendBackJson.put("data", locationJson2);
-                sendBackJson.put("target", "Firebase");
-                String sendBackData = sendBackJson.toString();
-                SEND(sendBackData);
+                    SendData.setSenderToken(getTheCurrentClient());//
+                    SendData.setDataOwnderToken(getTheCurrentClient());//
+
+                    if(checkRequestPermission(SendData.getRequestRange())){
+                        SendData.setPermission(true);
+                        STRegion region = STRegion.fromString(SendData.getRequestRange());
+                        List<PlaceData> places = filter.getPlacesByRange(region);
+                        SendData.setTitle("Request Places");
+                        SendData.setPlacesInfo(places);
+                        SEND(SendData.getSendData());
+                    }
+                    else{
+                        SendData.setPermission(false);
+                        SendData.setMessage("");
+                        SEND(SendData.getSendData());
+                    }
+                }
+                if(SendData.getStage() == 2){
+                    //whether request is accepted
+                    JSONObject json_permission = jsonData.getJSONObject("Permission");
+                    String permission = json_permission.get("Permission").toString();
+                    SendData.setPermission(Boolean.valueOf(permission));
+                    List<String> placeGet =  SendData.HandleFireData();
+                    if(Boolean.valueOf(permission)){
+                        for(int i =0; i<placeGet.size(); i+=2){
+                            updateList(placeGet.get(i), placeGet.get(i+1), "");//
+                        }
+                    } else{
+                        Toast.makeText(MainActivity.this,"Permission Denied", Toast.LENGTH_LONG).show();
+                    }
+                }
 
             } catch (JSONException e) {
                 //Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_SHORT).show();
                 Log.d("JSONException", e.toString());
-            }
-
-            //sender(phone 1) receiving location information form phone 2
-            try {
-                JSONObject jsonData = new JSONObject(message);
-                JSONObject jsonLocation = jsonData.getJSONObject("SendBackLocation");
-                String Location = jsonLocation.get("Location").toString();
-                String fireBase_msg = "Receiver Location: " + Location +"\n";
-                adapter.add(fireBase_msg);
-
-            }catch (JSONException e) {
-                //Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -374,8 +503,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                         if (!task.isSuccessful()) {
                             return;
                         }
-                        String token = task.getResult().getToken();
-                        //tokenView.setText(token);
                     }
                 });
     }
@@ -484,34 +611,110 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         }
     }
 
-    //upadate Place
-    private  void updateList(String title, String description, String image){
-        //update data
-        STRegion region;
-        //PlaceStore placeStore = new PlaceStore(MainActivity.this);
+    public boolean checkRequestPermission(String range){
+        STRegion region = STRegion.fromString(range);
 
-        if(STRegion.fromString(description) != null){
-            region = STRegion.fromString(description);//
+        float range_x = region.getMaxs().getX() - region.getMins().getX();
+        float range_y = region.getMaxs().getY() - region.getMins().getY();
+        float range_t = region.getMaxs().getT() - region.getMins().getT();
+
+        float S_RANGE = accessProfile.getMinSpaceWindow();
+        float T_RANGE = accessProfile.getMinTempWindow();
+
+        if(S_RANGE <= range_x && S_RANGE <= range_y && (T_RANGE <= range_t || T_RANGE == 0.0) ){
+            Log.d("RnageRnage", "A"+true);
+            return true;
         }
         else{
-            region = new STRegion(new STPoint(0, 0), new STPoint(0, 0));
+            Log.d("RnageRnage", "A"+false);
+            return false;
         }
-        try {
-            Bitmap bitImage = StringToBitMap(image);
-            Log.d("bitImage", image);
-            Uri imUri = getImageUri(getApplicationContext(), bitImage, title);
-            String posterPath = getRealPathFromURI(imUri);
-            //placeStore.put(title, posterPath, region);
-            //this.filter.insert(region.getMins(), title, posterPath);//
-        }
-        catch (Exception e){
-            Log.d("Exception", e.toString());
+
+    }
+
+//    public boolean checkRequestPermission(String range){
+//        float xGridGran = X_CUBE;
+//        float yGridGran = Y_CUBE;
+//        float tGridGran = T_CUBE;
+//        STRegion region = STRegion.fromString(range);
+//
+//        Log.d("checkRequestPermissionregion", region.toString());
+//        float range_x = region.getMaxs().getX() - region.getMins().getX();
+//        float range_y = region.getMaxs().getY() - region.getMins().getY();
+//        float range_t = region.getMaxs().getT() - region.getMins().getT();
+//        STPoint reqMax = region.getMaxs();
+//        STPoint reqMin = region.getMins();
+//
+//        float gran = (float)setData.getGranValue();
+//
+//        if((double)xGridGran*(double)gran > (double)range_x || (double) yGridGran*(double)gran > (double)range_y || (double)tGridGran*(double)gran> (double)range_t){
+//            return false;
+//        }
+//        else{
+//            STPoint perMax;
+//            STPoint perMin;
+//            String RangeValue = setData.getRangeValue();
+//            if(RangeValue.equals("all")){
+//                return true;
+//            }
+//            else{
+//                STRegion perRegion = STRegion.fromString(RangeValue);
+//                perMax = perRegion.getMaxs();/////
+//                perMin = perRegion.getMins();/////
+//
+//                if( (double)reqMax.getX()>(double)perMax.getX() || (double)reqMax.getY()>(double)perMax.getY() || (double)reqMax.getT()>(double)perMax.getT()
+//                    || (double)reqMin.getX()<(double)perMin.getX() || (double)reqMin.getY()<(double)perMin.getY() && (double)reqMin.getT()<(double)perMin.getT()
+//                ){Log.d("checkRequestPermission1", "YYY");
+//                    return false;
+//                } else {
+//                    Log.d("checkRequestPermission2", "NNN");
+//                    return true;
+//                }
+//            }
+//        }
+//    }
+
+    //upadate Place
+    public void updateList(String title, String description, String image){
+        //update data
+        //STRegion region;
+        STPoint location;
+        //PlaceStore placeStore = new PlaceStore(MainActivity.this);
+
+        //Log.d("checkRequestPermission3", description);
+        location = STPoint.fromString(description);//
+
+
+        if(!"".equals(image)) {
+            try {
+                Bitmap bitImage = StringToBitMap(image);
+                Uri imUri = getImageUri(getApplicationContext(), bitImage, title);
+                //String posterPath = getRealPathFromURI(imUri);
+                //placeStore.put(title, posterPath, region);
+                this.filter.insert(location, title, imUri.toString());/////??imUri.toString()
+            } catch (Exception e) {
+                Log.d("Exception", e.toString());
+            }
+        } else{
+            this.filter.insert(location, title, "");
         }
 
         //refresh page
         Fragment frag = MainActivity.this.getSupportFragmentManager().findFragmentByTag("PlacesFragment");
         if(frag.isVisible()){
             fHelper.show("PlacesFragment", new PlacesFragment());
+        }
+    }
+
+    //upadate Notification
+    public void updateNotificationList(String[] notification){
+        notificationStore NotificationStore = new notificationStore(this);
+        NotificationStore.put(notification[0], notification[1]);
+
+        //refresh page
+        Fragment frag = MainActivity.this.getSupportFragmentManager().findFragmentByTag("NotificationFragment");
+        if(frag!=null && frag.isVisible()){
+            fHelper.show("NotificationFragment", new NotificationsFragment());
         }
     }
 
@@ -580,6 +783,15 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
             // New Location return here
             Toast.makeText(MainActivity.this, "onLocationChanged", Toast.LENGTH_SHORT).show();
             getLocation(location);
+
+            //update to Firebase
+            SharedPreferences sharedpreferences = getBaseContext().getSharedPreferences("token", Context.MODE_PRIVATE);
+            String token = sharedpreferences.getString("token", "Default");
+
+            mDatabaseReference = mDatabase.getReference().child("user").child(token);
+            user.setLastLocation(currentLocation);
+            user.setTokenID(token);
+            mDatabaseReference.setValue(user);
         }
     };
 
@@ -623,9 +835,14 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
     public MqttAndroidClient getClient() {return client;}
     public String getTheCurrentClient() {return clientID;}
-    public ArrayAdapter getAdapter() {return adapter;}
+    public String getCurrentLocation() {return currentLocation;}
     public FragmentHelper getFragmentHelper() {return fHelper;}
-
+    public SettingData getSetData() {return setData;}
+    public AccessProfile getAccessProfile() {return accessProfile;}
+    public LSTFilter getFilter() {return filter;}
+    public UserData getUser() {return user;}
+    public DatabaseReference getDatabaseReference() {return mDatabaseReference;}
+    public FirebaseDatabase getDatabase(){return mDatabase;}
 
     private class LastKnownLocationReceiver extends BroadcastReceiver {
         @Override
@@ -708,15 +925,25 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
             tag = "PlacesFragment";
             fHelper.show(tag, new PlacesFragment());
             return true;
-        } else if(id == R.id.action_send_places) {
-            tag = "SendFragment";
-            fHelper.show(tag, new SendFragment());
-            return true;
         } else if(id == R.id.action_receive_places) {
             tag = "NotificationFragment";
             fHelper.show(tag, new NotificationsFragment());
             return true;
+        } else if(id == R.id.action_setting_privacy) {
+            tag = "SettingFragment";
+            fHelper.show(tag, new SettingFragment());
+            return true;
         }
+//        else if(id == R.id.action_send_places) {
+//            tag = "SendFragment";
+//            fHelper.show(tag, new SendFragment());
+//            return true;
+//        }
+//        else if(id == R.id.action_request_places) {
+//            tag = "RequestFragment";
+//            fHelper.show(tag, new RequestFragment());
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);
     }

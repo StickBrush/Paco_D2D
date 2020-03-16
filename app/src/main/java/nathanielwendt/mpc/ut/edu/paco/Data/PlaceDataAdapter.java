@@ -1,11 +1,9 @@
-package nathanielwendt.mpc.ut.edu.paco;
+package nathanielwendt.mpc.ut.edu.paco.Data;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,27 +13,27 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-
-import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.utils.PlaceStore;
+import nathanielwendt.mpc.ut.edu.paco.FragmentHelper;
+import nathanielwendt.mpc.ut.edu.paco.MainActivity;
+import nathanielwendt.mpc.ut.edu.paco.PlacesFragment;
+import nathanielwendt.mpc.ut.edu.paco.PoKTask;
+import nathanielwendt.mpc.ut.edu.paco.R;
+import nathanielwendt.mpc.ut.edu.paco.SendFragment;
+import nathanielwendt.mpc.ut.edu.paco.SettingFragment;
 
 public class PlaceDataAdapter extends ArrayAdapter<PlaceData> {
     private final Context context;
     private final List<PlaceData> places;
     private PlacesFragment.OnFragmentInteractionListener mListener;
 
-    private FragmentHelper fHelper;//
+    private FragmentHelper fHelper;
     private Bitmap myBitmap;
 
     @Override
@@ -73,7 +71,8 @@ public class PlaceDataAdapter extends ArrayAdapter<PlaceData> {
         TextView coverage = (TextView) rowView.findViewById(R.id.coverage);
         ImageView poster = (ImageView) rowView.findViewById(R.id.poster);
         ImageView delete = (ImageView) rowView.findViewById(R.id.delete_btn);
-        Button btn_send = (Button) rowView.findViewById(R.id.send_btn);//
+        Button btn_send = (Button) rowView.findViewById(R.id.send_btn);
+        Button btn_access_set = (Button) rowView.findViewById(R.id.access_set_btn);
 
 
         //final PlaceStore placeStore = new PlaceStore((Activity) context);
@@ -81,7 +80,7 @@ public class PlaceDataAdapter extends ArrayAdapter<PlaceData> {
             @Override
             public void onClick(View v) {
                 String name = places.get(position).getName();//
-                ((MainActivity)getContext()).filter.delete(name);//
+                ((MainActivity)getContext()).getFilter().delete(name);//
                 places.remove(position);
                 //placeStore.removePlace(position);
                 PlaceDataAdapter.this.notifyDataSetChanged();
@@ -131,6 +130,22 @@ public class PlaceDataAdapter extends ArrayAdapter<PlaceData> {
             }
         });
 
+        btn_access_set.setOnClickListener(new Button.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SettingFragment settingFragment = new SettingFragment();
+
+                Bundle bundle=new Bundle();
+                bundle.putString("position", places.get(position).toString());
+                settingFragment.setArguments(bundle);
+                String tag = "SettingFragment";
+                fHelper = ((MainActivity)context).getFragmentHelper();
+                fHelper.show(tag, settingFragment);
+
+            }
+        });
+
         return rowView;
     }
+
 }

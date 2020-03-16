@@ -1,13 +1,11 @@
 package com.ut.mpc.utils;
 
-import android.database.Cursor;
-
 import com.ut.mpc.kdtree.KDTree;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 public class KDTreeAdapter implements STStorage {
 	public KDTree kdtree;
@@ -116,6 +114,10 @@ public class KDTreeAdapter implements STStorage {
     }
 
     public List<PlaceData> getPlaces(){
+
+        return null;
+    }//
+    public List<PlaceData> getPlacesByRange(STRegion range){
 
         return null;
     }//

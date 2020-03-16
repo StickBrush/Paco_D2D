@@ -1,7 +1,6 @@
 package nathanielwendt.mpc.ut.edu.paco;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
@@ -23,6 +22,8 @@ import com.ut.mpc.utils.STStorage;
 
 import java.util.List;
 
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceDataAdapter;
 import nathanielwendt.mpc.ut.edu.paco.utils.PlaceStore;
 
 /**
@@ -114,7 +115,7 @@ public class PlacesFragment extends Fragment {
         @Override
         public void onPermissionsChecked(MultiplePermissionsReport report) {
             //places = placeStore.getPlaces();
-            places = ((MainActivity)getActivity()).filter.getPlaces();//
+            places = ((MainActivity)getActivity()).getFilter().getPlaces();//
             mAdapter = new PlaceDataAdapter(getActivity(), mListener, places);
             placesList.setAdapter(mAdapter);
         }
@@ -131,7 +132,7 @@ public class PlacesFragment extends Fragment {
         if(!hidden) {
             int prevSize = places.size();
             //places = placeStore.getPlaces();
-            places = ((MainActivity)getActivity()).filter.getPlaces();//
+            places = ((MainActivity)getActivity()).getFilter().getPlaces();//
             if(places.size() > prevSize){
                 //super hacky way to update list view...
                 mAdapter = new PlaceDataAdapter(getActivity(), mListener, places);

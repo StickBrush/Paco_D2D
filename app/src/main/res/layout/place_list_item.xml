@@ -47,9 +47,18 @@
         android:id="@+id/send_btn"
         android:text="@string/btn_send"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="10sp"
+        android:layout_height="30dp"
+        android:textSize="8sp"
         android:layout_toRightOf="@+id/name"
         android:layout_below="@+id/delete_btn"/>
+
+    <Button
+        android:id="@+id/access_set_btn"
+        android:text="MORE"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:textSize="8sp"
+        android:layout_toRightOf="@+id/name"
+        android:layout_below="@+id/send_btn"/>
 
 </RelativeLayout>

@@ -6,6 +6,8 @@ import android.widget.TextView;
 
 import com.ut.mpc.utils.STRegion;
 
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
+
 // The definition of our task class
 public class PoKTask extends AsyncTask<Object, Integer, Double> {
     TextView textView;

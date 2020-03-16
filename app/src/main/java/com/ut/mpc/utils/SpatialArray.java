@@ -1,10 +1,9 @@
 package com.ut.mpc.utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 import static com.ut.mpc.setup.Constants.SPATIAL_TYPE;
 
@@ -133,6 +132,10 @@ public class SpatialArray implements STStorage {
     }
 
     public List<PlaceData> getPlaces(){
+        List<PlaceData> list = null;
+        return list;
+    }//
+    public List<PlaceData> getPlacesByRange(STRegion range){
         List<PlaceData> list = null;
         return list;
     }//

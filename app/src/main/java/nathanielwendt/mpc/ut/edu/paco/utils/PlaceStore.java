@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import nathanielwendt.mpc.ut.edu.paco.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 /**
  * Created by nathanielwendt on 11/26/16.

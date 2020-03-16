@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -21,15 +20,10 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
-import com.android.volley.RequestQueue;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -38,12 +32,8 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.karumi.dexter.listener.single.PermissionListener;
-import com.ut.mpc.utils.STRegion;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -51,10 +41,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.utils.PlaceStore;
-
-import static android.content.Intent.getIntent;
-import static com.firebase.ui.auth.AuthUI.getApplicationContext;
+import nathanielwendt.mpc.ut.edu.paco.Data.sendData;
 
 
 public class SendFragment extends Fragment {
@@ -82,6 +69,7 @@ public class SendFragment extends Fragment {
     private String title;
     private String message;
     private String data;
+    int stage;
 
     MqttAndroidClient client;
 
@@ -114,19 +102,20 @@ public class SendFragment extends Fragment {
         //place SEND
         Bundle bundle=getArguments();
         if(bundle != null){
-            in_message.setText(getArguments().getString("message"));
-            Title.setText(getArguments().getString("title"));
-            String uri = getArguments().getString("image");
+            if(getArguments().getString("message")!=null){in_message.setText(getArguments().getString("message"));}
+            if(getArguments().getString("title")!=null){Title.setText(getArguments().getString("title"));}
+            if(getArguments().getString("image")!=null) {
+                String uri = getArguments().getString("image");
 
-            File pictureFile = new File(uri.toString());
-            String file_url = "file://" + uri;
-            if(pictureFile.exists()){
-                try ( InputStream is = new URL( file_url ).openStream() ) {
-                    mBitmap = BitmapFactory.decodeStream( is );
-                    poster.setImageBitmap(mBitmap);
-                }
-                catch (Exception e){
-                    Log.d("Error", e.toString());
+                File pictureFile = new File(uri.toString());
+                String file_url = "file://" + uri;
+                if (pictureFile.exists()) {
+                    try (InputStream is = new URL(file_url).openStream()) {
+                        mBitmap = BitmapFactory.decodeStream(is);
+                        poster.setImageBitmap(mBitmap);
+                    } catch (Exception e) {
+                        Log.d("Error", e.toString());
+                    }
                 }
             }
         }
@@ -288,48 +277,17 @@ public class SendFragment extends Fragment {
         ReceiverToken = receiverToken.getText().toString();
         title = Title.getText().toString();
         message = in_message.getText().toString();
-        data = "{\n" +
-                "\t\"to\": \"" + ReceiverToken + "\",\n" +
-                "\t\"data\":{\n" +
-                "\t\t\"params\" : {\n" +
-                "\t\t\t\t\"title\" : \"" + title + "\",\n" +
-                "        \t\t\"description\" : \"" + message + "\",\n" +
-                "        \t\t\"image\" : \"" + strImage + "\"\n" +
-                "    \t\t\t}\n" +
-                "\t\t\t\n" +
-                "\t\t}\n" +
-                "}";
+        stage = 0;
 
-        try{
-            JSONObject inData = new JSONObject(data);
-            JSONObject oldData = inData.getJSONObject("data");
-            //put token in
-            JSONObject extraToken = new JSONObject();
-            extraToken.put("SenderToken", SenderToken);
-            oldData.put("Token", extraToken);
+        //share places
+        sendData data = new sendData();
+        data.setStage(0);
+        data.setDataOwnderToken(ReceiverToken);
+        data.setRequesterToken(SenderToken);
+        data.setTitle(title);
+        data.setMessage(message);
+        data.setUri(strImage);
+        return data.getSendData();
 
-            inData.put("data", oldData);
-            String strData = inData.toString();
-            return strData;
-        }
-        catch (JSONException e){
-            return null;
-        }
-    }
-
-    private String getRealPathFromURI(Uri contentUri)
-    {
-        try
-        {
-            String[] proj = {MediaStore.Images.Media.DATA};
-            Cursor cursor = getActivity().getContentResolver().query(contentUri, proj, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        }
-        catch (Exception e)
-        {
-            return contentUri.getPath();
-        }
     }
 }

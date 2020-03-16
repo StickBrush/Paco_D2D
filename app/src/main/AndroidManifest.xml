@@ -54,6 +54,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCLKJEwofbiRFZDr4VmUxFxKQA0aBFBlh4" />
 
+        <meta-data
+            android:name="com.google.android.nearby.messages.API_KEY"
+            android:value="AIzaSyBx-LVj86sZwnvWvPLR-xx7YA88GOz7J4A" />
+
         <service android:enabled="true" android:name=".LocationService" />
 
         <provider

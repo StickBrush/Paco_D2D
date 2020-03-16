@@ -9,7 +9,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.AccessProfile;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 import static com.ut.mpc.setup.Constants.PoK;
 import static com.ut.mpc.setup.Constants.SPATIAL_TYPE;
@@ -17,8 +18,9 @@ import static com.ut.mpc.setup.Constants.SpatialType;
 
 public class LSTFilter {
 	private STStorage structure;
-	private boolean smartInsert = true;
+	private boolean smartInsert = false;//true
     private boolean kdCache = true;
+	private float gridFactor;//
 
 	/**
 	 * Creates a new LSTFilter containing the given structure.
@@ -189,12 +191,12 @@ public class LSTFilter {
         double regionWeight = 0.0;
 		BigDecimal BigminBounds = new BigDecimal(Float.toString(minBounds.getT()));
 		BigDecimal BigmaxBounds = new BigDecimal(Float.toString(maxBounds.getT()));
-		BigDecimal BigtGridGran = new BigDecimal(Float.toString(tGridGran));
+		BigDecimal BigtGridGran = new BigDecimal(Float.toString(tGridGran));///gridFactor
 		BigDecimal BigtCenterOffset = new BigDecimal(Float.toString(tCenterOffset));
 
         int effCubeCount = 0;
-        for(float x = minBounds.getX(); x < maxBounds.getX(); x = x + xGridGran){
-            for(float y = minBounds.getY(); y < maxBounds.getY(); y = y + yGridGran){
+        for(float x = minBounds.getX(); x < maxBounds.getX(); x = x + xGridGran/gridFactor){
+            for(float y = minBounds.getY(); y < maxBounds.getY(); y = y + yGridGran/gridFactor){
                 //for(float t = minBounds.getT(); t < maxBounds.getT(); t = t + tGridGran){
 				for (BigDecimal t = BigminBounds; t.compareTo(BigmaxBounds) < 0; t = t.add(BigtGridGran)){
 					float tAddtCenterOffset = t.add(BigtCenterOffset).floatValue();
@@ -220,12 +222,6 @@ public class LSTFilter {
         double cubeVolume = (xGridGran * yGridGran * tGridGran);
         double blankCubes = Math.floor(volDiff / cubeVolume);
 
-//        System.out.println("window" + window.getRegion());
-//        System.out.println("evalWindow" + evalRegion);
-//        System.out.println("cube count " + effCubeCount);
-//        System.out.println("blank cubes " + blankCubes);
-//        System.out.println("totalWeight " + totalWeight);
-//        System.out.println("volDiff " + volDiff);
         if(volDiff < 0){
             throw new RuntimeException("volume difference should never be less than 0");
         }
@@ -338,8 +334,9 @@ public class LSTFilter {
 			aggResults[1] = 0;
 			List<Double> empty = new ArrayList<Double>();
 			int numTrimmed = this.trimNearby(nearby);
-			this.getAggPoK(aggResults,empty,nearby);
-			//recurseIterations += aggResults[1];
+			this.getAggPoK(aggResults,empty, nearby.subList(numTrimmed, nearby.size() - 1));//
+			//this.getAggPoK(aggResults,empty,nearby);
+			////recurseIterations += aggResults[1];
 			if(aggResults[0] > 0)
 				tileWeight = aggResults[0];
 			else
@@ -421,18 +418,36 @@ public class LSTFilter {
 		structure.insert(point);
 	}
 
+
+	/////////////
 	private void stdInsert(STPoint point, String placeName, String uri) {
 		structure.insert(point, placeName, uri);
-	}//
+	}
 
 	public List<PlaceData> getPlaces(){
-
 		List<PlaceData> list = structure.getPlaces();
-
 		return list;
-	}//
+	}
+
+	public List<PlaceData> getPlacesByRange(STRegion range){
+		Log.d("checkRequestPermission_placeList_check", range.toString());
+		List<PlaceData> list = structure.getPlacesByRange(new STRegion(range.getMins(), range.getMaxs()));
+		Log.d("checkRequestPermission_getPlacesByRange_check", list.toString());
+		return list;
+	}
 
 	public void delete(String name){
 		structure.delete(name);
 	}//
+
+	public List<STPoint> range(STRegion range){
+		List<STPoint> list = structure.range(new STRegion(range.getMins(), range.getMaxs()));
+		return list;
+	}
+
+	public void setGridFactor(double GridFactor){
+		float gridTemp = (float) GridFactor;
+		this.gridFactor = gridTemp;
+	}
+	/////////////
 }

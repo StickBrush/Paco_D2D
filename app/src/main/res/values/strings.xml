@@ -9,4 +9,5 @@
     <string name="btn_camera_def">Camera</string>
     <string name="btn_camera_preview">Capture!</string>
     <string name="btn_send">SEND</string>
+    <string name="btn_request">Request</string>
 </resources>

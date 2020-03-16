@@ -277,7 +277,7 @@ public class CreatePlaceFragment extends Fragment {
             if(storagePermissions){
                 //PlaceStore placeStore = new PlaceStore(getActivity());
                 //placeStore.put(placeTitle.getText().toString(), posterPath, placeBounds);
-                ((MainActivity)getActivity()).filter.insert(placeBounds.getMins(), placeTitle.getText().toString(), posterPath);//
+                ((MainActivity)getActivity()).getFilter().insert(placeBounds.getMins(), placeTitle.getText().toString(), posterPath);//
                 mListener.onCreatePlaceDone();
             } else {
                 Dexter.checkPermissions(storagePermissionsListener, Manifest.permission.READ_EXTERNAL_STORAGE,

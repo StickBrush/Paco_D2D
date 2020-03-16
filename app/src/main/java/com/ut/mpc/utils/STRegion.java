@@ -89,13 +89,16 @@ public class STRegion {
 
 	public static STRegion fromString(String input){//
 		try{
-		Log.d("input", input);
+		Log.d("input1", input);
 		String[] temp = input.split(" ");
 		STPoint minPoint = STPoint.fromString("X: "+temp[2]+ " Y: "+temp[4] + " T: "+temp[6]);
 		STPoint maxPoint = STPoint.fromString("X: "+temp[8]+ " Y: "+temp[10] + " T: "+temp[12]);
+		Log.d("input2", minPoint.toString());
+		Log.d("input3", maxPoint.toString());
 		return new STRegion(minPoint, maxPoint);
 		}
 		catch (Exception e){
+			Log.d("Exception", e.toString());
 			return null;
 		}
 	}

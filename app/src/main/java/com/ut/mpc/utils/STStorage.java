@@ -1,10 +1,8 @@
 package com.ut.mpc.utils;
 
-import android.database.Cursor;
-
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 /*
  * SpatioTemporal Data Storage Interface
@@ -59,6 +57,8 @@ public interface STStorage {
     public void clear();
 
 	public List<PlaceData> getPlaces();//
+
+	public List<PlaceData> getPlacesByRange(STRegion range);//
 
 	public void delete(String name);//
 }

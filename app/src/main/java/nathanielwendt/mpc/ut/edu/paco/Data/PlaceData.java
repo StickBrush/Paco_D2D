@@ -1,4 +1,4 @@
-package nathanielwendt.mpc.ut.edu.paco;
+package nathanielwendt.mpc.ut.edu.paco.Data;
 
 import com.ut.mpc.utils.STRegion;
 
@@ -6,6 +6,7 @@ import com.ut.mpc.utils.STRegion;
  * Created by nathanielwendt on 11/25/16.
  */
 public class PlaceData {
+
     public String getName() {
         return name;
     }
@@ -30,9 +31,7 @@ public class PlaceData {
         this.region = region;
     }
 
-    public String getCoverage() {
-        return coverage;
-    }
+    public String getCoverage() { return coverage; }
 
     public void setCoverage(String coverage) {
         this.coverage = coverage;

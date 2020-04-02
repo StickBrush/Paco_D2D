@@ -41,7 +41,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.Data.sendData;
+import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.sendData;
 
 
 public class SendFragment extends Fragment {
@@ -126,7 +126,7 @@ public class SendFragment extends Fragment {
             public void onClick(View view) {
                 Bitmap b = Bitmap.createScaledBitmap(mBitmap,(int)(mBitmap.getWidth()*0.03), (int)(mBitmap.getHeight()*0.03), true);
                 strImage = getStringImage(b);
-                ((MainActivity)getActivity()).SEND(sendData());
+                ((MainActivity)getActivity()).mPaco.SEND(sendData());//
 
             }
         });
@@ -141,7 +141,7 @@ public class SendFragment extends Fragment {
                                 @Override
                                 public void onClick(View view) {
                                     strImage = getStringImage(mBitmap);
-                                    ((MainActivity)getActivity()).sendMQTT(sendData());
+                                    ((MainActivity)getActivity()).mPaco.sendMQTT(sendData());//
 
                                 }
                             });
@@ -152,7 +152,7 @@ public class SendFragment extends Fragment {
                                 public void onClick(View view) {
                                     Bitmap b = Bitmap.createScaledBitmap(mBitmap,(int)(mBitmap.getWidth()*0.03), (int)(mBitmap.getHeight()*0.03), true);
                                     strImage = getStringImage(b);
-                                    ((MainActivity)getActivity()).SEND(sendData());
+                                    ((MainActivity)getActivity()).mPaco.SEND(sendData());//
 
                                 }
                             });

@@ -28,9 +28,12 @@ android {
         unitTests.includeAndroidResources = true
         unitTests.returnDefaultValues = true
     }
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/io.netty.versions.properties'
+    }
     useLibrary 'android.test.runner'
     useLibrary 'android.test.base'
-//    useLibrary 'android.test.mock'
 }
 
 dependencies {
@@ -55,7 +58,11 @@ dependencies {
     implementation('org.eclipse.paho:org.eclipse.paho.android.service:1.1.1') {
         exclude module: 'support-v4'
     }
-    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.0'
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.1'
+    implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
+    implementation 'io.moquette:moquette-netty-parser:0.8.1'
+    implementation 'io.moquette:moquette-broker:0.8.1'
+    implementation 'io.moquette:moquette-parser-commons:0.8.1'
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
     implementation 'com.android.volley:volley:1.1.1'
     implementation 'com.google.code.gson:gson:2.8.6'

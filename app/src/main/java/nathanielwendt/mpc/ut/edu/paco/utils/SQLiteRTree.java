@@ -5,6 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
 
+import com.ut.mpc.setup.Constants;
+import com.ut.mpc.utils.GPSLib;
+import com.ut.mpc.utils.LSTFilterException;
+import com.ut.mpc.utils.Quicksort;
 import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 import com.ut.mpc.utils.STStorage;
@@ -19,6 +23,7 @@ import java.util.List;
 
 import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
+import static com.ut.mpc.setup.Constants.*;
 import static nathanielwendt.mpc.ut.edu.paco.utils.DBConstants.DATABASE_NAME;
 import static nathanielwendt.mpc.ut.edu.paco.utils.DBConstants.DATABASE_VERSION;
 
@@ -144,11 +149,11 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
             prefix = " AND ";
         }
 
-//        if(mins.hasT() && maxs.hasT()){
-//            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
-//                    " AND maxT <= " + String.format("%f", maxs.getT());
-//            prefix = " AND ";
-//        }
+        if(mins.hasT() && maxs.hasT()){
+            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
+                    " AND maxT <= " + String.format("%f", maxs.getT());
+            prefix = " AND ";
+        }
 
         Cursor cur = db.rawQuery(query, null);
 
@@ -158,13 +163,91 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
     }
 
     @Override
-    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n) {
-        return null;
+    public List<STPoint> rangeByT(STRegion range) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String query = "SELECT id,minX,maxX,minY,maxY,minT,maxT from " + this.table_identifier + " ";
+
+        STPoint mins = range.getMins();
+        STPoint maxs = range.getMaxs();
+
+        String prefix = " WHERE ";
+
+        if(mins.hasT() && maxs.hasT()){
+            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
+                    " AND maxT <= " + String.format("%f", maxs.getT());
+            prefix = " AND ";
+        }
+
+        Cursor cur = db.rawQuery(query, null);
+
+        List<STPoint> points = cursorToList(cur);
+        db.close();
+        return points;
     }
 
     @Override
-    public List<STPoint> getSequence(STPoint start, STPoint end) {
-        return null;
+    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n, int dim) {//dim is 2 or 3
+
+        STPoint min = new STPoint(needle.getX()-boundValues.getX(), needle.getY()-boundValues.getY(), needle.getT()-boundValues.getT());
+        STPoint max = new STPoint(needle.getX()+boundValues.getX(), needle.getY()+boundValues.getY(), needle.getT()+boundValues.getT());
+
+        STRegion range = new STRegion(min, max);
+        List<STPoint> allPoints = range(range);
+
+        Quicksort qs = new Quicksort();
+
+        qs.sortNearPoints(needle, allPoints, 0, allPoints.size() - 1, dim);
+
+        allPoints.remove(0);//remove itself
+        while(allPoints.size() > n){
+            allPoints.remove(allPoints.size()-1);
+        }
+
+        if(allPoints.size()< 1){return null;}////
+
+        return allPoints;
+    }
+
+    @Override
+    public List<STPoint> getSequence(STPoint start, STPoint end, int dim) {//
+
+        STRegion region = new STRegion(start, end);
+        if(dim == 2) {
+            List<STPoint> sequenceList = rangeByT(region);
+            Quicksort qs = new Quicksort();
+            qs.sort(sequenceList, 0, sequenceList.size() - 1, 2);//sort by time
+
+            return sequenceList;
+        }
+        else{
+            ////
+            List<STPoint> sequenceList = new ArrayList<>();
+            Quicksort qs = new Quicksort();
+            qs.sort(sequenceList, 0, sequenceList.size() - 1, 2);//sort by time
+            return sequenceList;
+        }
+
+//        STRegion region = new STRegion(start, end);
+//        STPoint bound = new STPoint(90, 180, end.getT() - start .getT());//
+//        List<STPoint> tempList = rangeByT(region);
+//        List<STPoint> sequenceList = new ArrayList<>();
+
+//        sequenceList.add(start);
+//        sequenceList.add(end);
+//        STPoint curPoint = start;
+//        STPoint nearPoint;
+//
+//        tempList.remove(curPoint);
+
+//        if(dim == 2){
+//            while(tempList != null && tempList.size()!=0){
+//                nearPoint = nearestNeighbor(curPoint, bound, 1, 2).get(0);
+//                tempList.remove(curPoint);
+//                curPoint = nearPoint;
+//                sequenceList.add(nearPoint);
+//            }
+//        }
     }
 
     @Override
@@ -249,9 +332,21 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
 
     public void delete(String name){
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(this.table_identifier, "placeName="+name, null);//int
-//        db.delete(this.table_identifier, "placeName = ?",new String[] {name});//String
-    }////
+        if(isInteger(name)){
+            db.delete(this.table_identifier, "placeName="+name, null);//int
+         } else{
+            db.delete(this.table_identifier, "placeName = ?",new String[] {name});//String
+         }
+    }
+
+    public boolean isInteger(String string) {
+        try {
+            Integer.valueOf(string);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
     @Override
     public void onCreate(SQLiteDatabase database) {
@@ -340,11 +435,11 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
             prefix = " AND ";
         }
 
-//        if(mins.hasT() && maxs.hasT()){
-//            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
-//                    " AND maxT <= " + String.format("%f", maxs.getT());
-//            prefix = " AND ";
-//        }
+        if(mins.hasT() && maxs.hasT()){
+            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
+                    " AND maxT <= " + String.format("%f", maxs.getT());
+            prefix = " AND ";
+        }
 
         Cursor cur = db.rawQuery(query, null);
 
@@ -354,31 +449,4 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
 
         return places;
     }
-
-//    private List<PlaceData> RegionPointToList(Cursor cur){
-//        List<PlaceData> list = new ArrayList<PlaceData>();
-//
-//        cur.moveToFirst();
-//        while (!cur.isAfterLast()) {
-//            int id = cur.getInt(0);
-//            float minX = cur.getFloat(1);
-//            float maxX = cur.getFloat(2);
-//            float minY = cur.getFloat(3);
-//            float maxY = cur.getFloat(4);
-//            float minT = cur.getFloat(5);
-//            float maxT = cur.getFloat(6);
-//            String placeName = cur.getString(7);
-//            String uri = cur.getString(8);
-//
-//            STPoint point = new STPoint(minX, minY, minT);
-//            STRegion bounds = new STRegion(point, point);
-//            PlaceData nextPlace = new PlaceData(placeName, uri, bounds);
-//
-//            list.add(nextPlace);
-//            cur.moveToNext();
-//        }
-//        cur.close();
-//        Log.d("pointToList", list.toString());
-//        return list;
-//    }//
 }

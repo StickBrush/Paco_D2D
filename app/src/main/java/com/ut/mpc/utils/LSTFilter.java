@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.Data.AccessProfile;
 import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 import static com.ut.mpc.setup.Constants.PoK;
@@ -97,7 +96,7 @@ public class LSTFilter {
 
         //List<STPoint> boundPoints = structure.range(window.getRegion());
         List<STPoint> boundPoints = structure.range(new STRegion(minFetch, maxFetch));
-		Log.d("boundPoints", boundPoints.toString());
+		Log.d("checkBoundPoints", boundPoints.toString());
 
         if(boundPoints.size() == 0){
             return 0.0;
@@ -127,10 +126,12 @@ public class LSTFilter {
         float effXSpan = effMaxBounds.getX() - effMinBounds.getX();
         float effYSpan = effMaxBounds.getY() - effMinBounds.getY();
         float effTSpan = effMaxBounds.getT() - effMinBounds.getT();
+
         if(effXSpan < xGridGran){
             float midX = (effXSpan / 2) + effMaxBounds.getX();
             minBounds.setX(midX - xCenterOffset);
-            maxBounds.setX(midX + xCenterOffset);
+			maxBounds.setX((midX - xCenterOffset) + 2*xCenterOffset);//
+            //maxBounds.setX(midX + xCenterOffset);
         } else {
             minBounds.setX(STPoint.maxValidDim(effMinBounds.getX(), minQueryBounds.getX()));
             maxBounds.setX(STPoint.minValidDim(effMaxBounds.getX(), maxQueryBounds.getX()));
@@ -138,7 +139,8 @@ public class LSTFilter {
         if(effYSpan < yGridGran){
             float midY = (effYSpan / 2) + effMaxBounds.getY();
             minBounds.setY(midY - yCenterOffset);
-            maxBounds.setY(midY + yCenterOffset);
+			maxBounds.setY((midY - yCenterOffset) + 2*yCenterOffset);//
+            //maxBounds.setY((midY - yCenterOffset) + 2*yCenterOffset);
         } else {
             minBounds.setY(STPoint.maxValidDim(effMinBounds.getY(), minQueryBounds.getY()));
             maxBounds.setY(STPoint.minValidDim(effMaxBounds.getY(), maxQueryBounds.getY()));
@@ -146,7 +148,8 @@ public class LSTFilter {
         if(effTSpan < tGridGran){
             float midT = (effTSpan / 2) + effMaxBounds.getT();
             minBounds.setT(midT - tCenterOffset);
-            maxBounds.setT(midT + tCenterOffset);
+			maxBounds.setT((midT - tCenterOffset) + 2*tCenterOffset);//
+            //maxBounds.setT(midT + tCenterOffset);
         } else {
             minBounds.setT(STPoint.maxValidDim(effMinBounds.getT(), minQueryBounds.getT()));
             maxBounds.setT(STPoint.minValidDim(effMaxBounds.getT(), maxQueryBounds.getT()));
@@ -167,7 +170,7 @@ public class LSTFilter {
         if(this.kdCache){
             if(window.hasSpaceBounds() && window.hasTimeBounds()){
                 cacheStore = KDTreeAdapter.makeBalancedTree(3,0,boundPoints);
-                evalVolume = evalRegion.getNVolume(true, true, true);
+                	evalVolume = evalRegion.getNVolume(true, true, true);
             } else if(window.hasSpaceBounds() && !window.hasTimeBounds()){
                 cacheStore = KDTreeAdapter.makeBalancedTree(2,0,boundPoints);
                 evalVolume = evalRegion.getNVolume(true, true, false);
@@ -195,15 +198,12 @@ public class LSTFilter {
 		BigDecimal BigtCenterOffset = new BigDecimal(Float.toString(tCenterOffset));
 
         int effCubeCount = 0;
-        for(float x = minBounds.getX(); x < maxBounds.getX(); x = x + xGridGran/gridFactor){
-            for(float y = minBounds.getY(); y < maxBounds.getY(); y = y + yGridGran/gridFactor){
-                //for(float t = minBounds.getT(); t < maxBounds.getT(); t = t + tGridGran){
-				for (BigDecimal t = BigminBounds; t.compareTo(BigmaxBounds) < 0; t = t.add(BigtGridGran)){
-					float tAddtCenterOffset = t.add(BigtCenterOffset).floatValue();
-
+        for(float x = minBounds.getX(); x < maxBounds.getX(); x = x + xGridGran){//devide ....
+            for(float y = minBounds.getY(); y < maxBounds.getY(); y = y + yGridGran){
+                for(float t = minBounds.getT(); t < maxBounds.getT(); t = t + tGridGran){
 					STPoint centerOfRegion = new STPoint(x + xCenterOffset,
 														 y + yCenterOffset,
-															tAddtCenterOffset);//
+							                             t + tCenterOffset);
                     try {
                         STRegion miniRegion = GPSLib.getSpaceBoundQuick(centerOfRegion, boundValues, SPATIAL_TYPE);
                         List<STPoint> activePoints = cacheStore.range(miniRegion);//all the points in miniRegion
@@ -222,8 +222,9 @@ public class LSTFilter {
         double cubeVolume = (xGridGran * yGridGran * tGridGran);
         double blankCubes = Math.floor(volDiff / cubeVolume);
 
-        if(volDiff < 0){
-            throw new RuntimeException("volume difference should never be less than 0");
+		if(volDiff < 0){
+            //throw new RuntimeException("volume difference should never be less than 0");
+			blankCubes = 0.0;//
         }
 
         return totalWeight / (effCubeCount + blankCubes);
@@ -267,8 +268,8 @@ public class LSTFilter {
 	 * @param end - terminating point of path
 	 * @return list of the sequentially (temporal) ordered points
 	 */
-	public List<STPoint> findPath(STPoint start, STPoint end) {
-		return structure.getSequence(start, end);
+	public List<STPoint> findPath(STPoint start, STPoint end, int dim) {//
+		return structure.getSequence(start, end, dim);
 	}
 
     /**
@@ -324,7 +325,7 @@ public class LSTFilter {
 			spatialCont =  (-1 * Math.min(spatialDist, PoK.SPACE_RADIUS));
 			temporalCont = (-1 * Math.min(temporalDist, PoK.TEMPORAL_RADIUS));
 			contribution = ((spatialCont + PoK.SPACE_WEIGHT) * (temporalCont + PoK.TEMPORAL_WEIGHT)) / (PoK.SPACE_WEIGHT * PoK.TEMPORAL_WEIGHT);
-//			contribution = ((spatialCont + PoK.SPACE_RADIUS)*PoK.SPACE_WEIGHT * (temporalCont + PoK.TEMPORAL_RADIUS)*PoK.TEMPORAL_WEIGHT) / (PoK.SPACE_RADIUS * PoK.TEMPORAL_RADIUS);
+			//contribution = ((spatialCont + PoK.SPACE_RADIUS)*PoK.SPACE_WEIGHT * (temporalCont + PoK.TEMPORAL_RADIUS)*PoK.TEMPORAL_WEIGHT) / (PoK.SPACE_RADIUS * PoK.TEMPORAL_RADIUS);
 			nearby.add(contribution);
 		}
 
@@ -334,9 +335,9 @@ public class LSTFilter {
 			aggResults[1] = 0;
 			List<Double> empty = new ArrayList<Double>();
 			int numTrimmed = this.trimNearby(nearby);
-			this.getAggPoK(aggResults,empty, nearby.subList(numTrimmed, nearby.size() - 1));//
-			//this.getAggPoK(aggResults,empty,nearby);
-			////recurseIterations += aggResults[1];
+//			this.getAggPoK(aggResults,empty, nearby.subList(numTrimmed, nearby.size() - 1));//
+			this.getAggPoK(aggResults,empty,nearby);
+			//recurseIterations += aggResults[1];
 			if(aggResults[0] > 0)
 				tileWeight = aggResults[0];
 			else
@@ -361,6 +362,10 @@ public class LSTFilter {
 		}
 		return initialSize - nearby.size();
 	}
+
+//	public List<STPoint> nearestNeighbor(STPoint a, STPoint b, int x, int dim){
+//		return structure.nearestNeighbor(a, b, x, dim);
+//	}
 
 	/**
 	 * Uses the inclusion-exclusion principle to determine the aggregate probability of points
@@ -430,9 +435,12 @@ public class LSTFilter {
 	}
 
 	public List<PlaceData> getPlacesByRange(STRegion range){
-		Log.d("checkRequestPermission_placeList_check", range.toString());
 		List<PlaceData> list = structure.getPlacesByRange(new STRegion(range.getMins(), range.getMaxs()));
-		Log.d("checkRequestPermission_getPlacesByRange_check", list.toString());
+		return list;
+	}
+
+	public List<STPoint> rangeByT(STRegion range){
+		List<STPoint> list = structure.rangeByT(new STRegion(range.getMins(), range.getMaxs()));
 		return list;
 	}
 

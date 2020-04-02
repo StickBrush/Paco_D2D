@@ -71,8 +71,8 @@ public class PlaceDataAdapter extends ArrayAdapter<PlaceData> {
         TextView coverage = (TextView) rowView.findViewById(R.id.coverage);
         ImageView poster = (ImageView) rowView.findViewById(R.id.poster);
         ImageView delete = (ImageView) rowView.findViewById(R.id.delete_btn);
-        Button btn_send = (Button) rowView.findViewById(R.id.send_btn);
-        Button btn_access_set = (Button) rowView.findViewById(R.id.access_set_btn);
+//        Button btn_send = (Button) rowView.findViewById(R.id.send_btn);
+//        Button btn_access_set = (Button) rowView.findViewById(R.id.access_set_btn);
 
 
         //final PlaceStore placeStore = new PlaceStore((Activity) context);
@@ -113,37 +113,37 @@ public class PlaceDataAdapter extends ArrayAdapter<PlaceData> {
             }
         }
 
-        btn_send.setOnClickListener(new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SendFragment sendFragment = new SendFragment();
+//        btn_send.setOnClickListener(new Button.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                SendFragment sendFragment = new SendFragment();
+//
+//                Bundle bundle=new Bundle();
+//                bundle.putString("title", place.getName());
+//                bundle.putString("message", place.getRegion().toString());
+//                bundle.putString("image", place.getUri());
+//                sendFragment.setArguments(bundle);
+//
+//                String tag = "SendFragment";
+//                fHelper = ((MainActivity)context).getFragmentHelper();
+//                fHelper.show(tag, sendFragment);
+//            }
+//        });
 
-                Bundle bundle=new Bundle();
-                bundle.putString("title", place.getName());
-                bundle.putString("message", place.getRegion().toString());
-                bundle.putString("image", place.getUri());
-                sendFragment.setArguments(bundle);
-
-                String tag = "SendFragment";
-                fHelper = ((MainActivity)context).getFragmentHelper();
-                fHelper.show(tag, sendFragment);
-            }
-        });
-
-        btn_access_set.setOnClickListener(new Button.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SettingFragment settingFragment = new SettingFragment();
-
-                Bundle bundle=new Bundle();
-                bundle.putString("position", places.get(position).toString());
-                settingFragment.setArguments(bundle);
-                String tag = "SettingFragment";
-                fHelper = ((MainActivity)context).getFragmentHelper();
-                fHelper.show(tag, settingFragment);
-
-            }
-        });
+//        btn_access_set.setOnClickListener(new Button.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                SettingFragment settingFragment = new SettingFragment();
+//
+//                Bundle bundle=new Bundle();
+//                bundle.putString("position", places.get(position).toString());
+//                settingFragment.setArguments(bundle);
+//                String tag = "SettingFragment";
+//                fHelper = ((MainActivity)context).getFragmentHelper();
+//                fHelper.show(tag, settingFragment);
+//
+//            }
+//        });
 
         return rowView;
     }

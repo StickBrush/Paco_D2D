@@ -2,6 +2,8 @@ package com.ut.mpc.utils;
 
 import android.util.Log;
 
+import java.math.BigDecimal;
+
 /**
  * Creates a range object commonly used for queries
  * The range can be conceptualized as 2 STPoints, one for minimums and
@@ -87,14 +89,11 @@ public class STRegion {
 		return this.mins.toString() + this.maxs.toString();
 	}
 
-	public static STRegion fromString(String input){//
+	public static STRegion fromString(String input){
 		try{
-		Log.d("input1", input);
 		String[] temp = input.split(" ");
 		STPoint minPoint = STPoint.fromString("X: "+temp[2]+ " Y: "+temp[4] + " T: "+temp[6]);
 		STPoint maxPoint = STPoint.fromString("X: "+temp[8]+ " Y: "+temp[10] + " T: "+temp[12]);
-		Log.d("input2", minPoint.toString());
-		Log.d("input3", maxPoint.toString());
 		return new STRegion(minPoint, maxPoint);
 		}
 		catch (Exception e){
@@ -123,7 +122,7 @@ public class STRegion {
             temp *= this.maxs.getY() - this.mins.getY();
         }
         if(t){
-            temp *= this.maxs.getT() - this.mins.getT();
+			temp *= this.maxs.getT() - this.mins.getT();
         }
         return temp;
     }

@@ -4,6 +4,8 @@
  */
 
 package com.ut.mpc.utils;
+import com.ut.mpc.setup.Constants;
+
 import java.util.List;
 
 public class Quicksort  {
@@ -65,6 +67,17 @@ public class Quicksort  {
         this.numbersDub.set(j, temp);
     }
 
+    public static void sortNearPoints(STPoint needle, List<STPoint> values, int low, int high, int dim){
+        Quicksort qs = new Quicksort();
+        // check for empty or null array
+        if (values == null || values.size() == 0){
+            return;
+        }
+        qs.numbers = values;
+        qs.number = values.size();
+        qs.quickSortNearPoints(needle, low, high, dim);
+    }//
+
     public static void sort(List<STPoint> values, int low, int high, int dim){
         Quicksort qs = new Quicksort();
         // check for empty or null array
@@ -122,6 +135,58 @@ public class Quicksort  {
             quicksort(low, j, dim);
         if (i < high)
             quicksort(i, high, dim);
+    }
+
+    //sort the points by their distance from needle point
+    private void quickSortNearPoints(STPoint needle, int low, int high, int dim) {
+        int i = low, j = high;
+        // Get the pivot element from the middle of the list
+        //double pivot = this.getCoordinate((low + (high-low)/2), dim);
+        double pivot;
+        double curr;
+
+        // Divide into two lists
+        while (i <= j) {
+            try {
+                if(dim == 2){
+                    pivot = this.getCoordinate((low + (high-low)/2), dim);
+                    curr = this.getCoordinate(i, dim);
+                } else {
+                    pivot = GPSLib.distanceBetween(needle, numbers.get(i), Constants.SPATIAL_TYPE);//distance
+                    curr = GPSLib.distanceBetween(needle, numbers.get(i), Constants.SPATIAL_TYPE);//
+                }
+
+                // If the current value from the left list is smaller then the pivot
+                // element then get the next element from the left list
+                while (curr < pivot) {
+                    i++;
+                }
+                // If the current value from the right list is larger then the pivot
+                // element then get the next element from the right list
+                while (curr > pivot) {
+                    j--;
+                }
+
+            } catch (LSTFilterException e){
+
+            }
+
+            // If we have found a values in the left list which is larger then
+            // the pivot element and if we have found a value in the right list
+            // which is smaller then the pivot element then we exchange the
+            // values.
+            // As we are done we can increase i and j
+            if (i <= j) {
+                exchange(i, j);
+                i++;
+                j--;
+            }
+        }
+        // Recursion
+        if (low < j)
+            quickSortNearPoints(needle, low, j, dim);
+        if (i < high)
+            quickSortNearPoints(needle, i, high, dim);
     }
 
     private void exchange(int i, int j) {

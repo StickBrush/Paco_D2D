@@ -32,6 +32,8 @@ import com.ut.mpc.utils.STRegion;
 
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 
+import java.math.BigDecimal;
+
 /**
  * Created by nathanielwendt on 11/25/16.
  */
@@ -155,9 +157,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             double latOffset = GPSLib.latOffsetFromDistance(loc, Constants.LOCATION_RADIUS);
             double lonOffset = GPSLib.longOffsetFromDistance(loc, Constants.LOCATION_RADIUS);
-            long nowMS = System.currentTimeMillis();
-            STPoint mins = new STPoint((float) (latLng.longitude - lonOffset), (float) (latLng.latitude - latOffset), nowMS);//
-            STPoint maxs = new STPoint((float) (latLng.longitude + lonOffset), (float) (latLng.latitude + latOffset), nowMS);//
+
+            long nowMS = System.currentTimeMillis()/1000;
+            float MS = (float) (nowMS);
+
+            STPoint mins = new STPoint((float) (latLng.longitude - lonOffset), (float) (latLng.latitude - latOffset), MS);//
+            STPoint maxs = new STPoint((float) (latLng.longitude + lonOffset), (float) (latLng.latitude + latOffset), MS);//
             //STPoint mins = new STPoint((float) (latLng.longitude - lonOffset), (float) (latLng.latitude - latOffset));
             //STPoint maxs = new STPoint((float) (latLng.longitude + lonOffset), (float) (latLng.latitude + latOffset));
 
@@ -203,9 +208,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             clearMap();
 
-            long nowMS = System.currentTimeMillis();
+//            long nowMS = System.currentTimeMillis();
+//            float minMS = nowMS + (60 * 60 * 1000 * minHourOffset); //range values should be negative, effectively subtracting
+//            float maxMS = nowMS + (60 * 60 * 1000 * maxHourOffset); //range values should be negative, effectively subtracting
+
+            long nowMS = System.currentTimeMillis()/1000;
             float minMS = nowMS + (60 * 60 * 1000 * minHourOffset); //range values should be negative, effectively subtracting
             float maxMS = nowMS + (60 * 60 * 1000 * maxHourOffset); //range values should be negative, effectively subtracting
+//            float minMS = ((float) (nowMS/(double)1000)) + (60 * 60 * minHourOffset); //range values should be negative, effectively subtracting
+//            float maxMS = ((float) (nowMS/(double)1000)) + (60 * 60 * maxHourOffset); //range values should be negative, effectively subtracting
 
 //            int minTimeProgress = 1;//minTimeBar.getProgress() + 1; //0 is 1am
 //            int maxTimeProgress = 1;//maxTimeBar.getProgress() + 1; //0 is 1am
@@ -237,6 +248,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
             STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
+            //STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude);
+            //STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude);
             STRegion mapRegion = new STRegion(minPoint, maxPoint);
 
             double pok = mapListener.windowPoK(mapRegion);
@@ -259,6 +272,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         public void onClick(View v) {
             if(nextPlaceRegion != null){
                 mapListener.createPlace(nextPlaceRegion);
+                Log.d("LST", nextPlaceRegion.toString());
             } else {
                 Snackbar.make(v, "Must select region to create a new place", Snackbar.LENGTH_SHORT)
                         .setAction("Action", null).show();
@@ -275,12 +289,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             clearMap();
 
-            long nowMS = System.currentTimeMillis();
+//            long nowMS = System.currentTimeMillis();
+//            float minMS = nowMS + (60 * 60 * 1000 * minHourOffset); //range values should be negative, effectively subtracting
+//            float maxMS = nowMS + (60 * 60 * 1000 * maxHourOffset); //range values should be negative, effectively subtracting
+            long nowMS = System.currentTimeMillis()/1000;
             float minMS = nowMS + (60 * 60 * 1000 * minHourOffset); //range values should be negative, effectively subtracting
             float maxMS = nowMS + (60 * 60 * 1000 * maxHourOffset); //range values should be negative, effectively subtracting
 
             STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
             STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
+            //STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude);
+            //STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude);
             STRegion mapRegion = new STRegion(minPoint, maxPoint);
 
             request(mapRegion);

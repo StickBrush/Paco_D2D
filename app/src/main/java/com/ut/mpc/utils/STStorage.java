@@ -35,7 +35,7 @@ public interface STStorage {
 	 * @param n number of neighbors to retrieve
 	 * @return list of n nearest neighbors
 	 */
-	public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n);
+	public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n, int dim);
 	
 	/**
 	 * Internally calls nearest neighbor and performs a range query on timestamps alone
@@ -43,7 +43,7 @@ public interface STStorage {
 	 * @param end Second query point, ending point for sequence
 	 * @return List of points in order they appear in the sequence
 	 */
-	public List<STPoint> getSequence(STPoint start, STPoint end);
+	public List<STPoint> getSequence(STPoint start, STPoint end, int dim);
 	
 	/**
 	 * Returns the bounding region around all data points in the structure
@@ -57,6 +57,8 @@ public interface STStorage {
     public void clear();
 
 	public List<PlaceData> getPlaces();//
+
+	public List<STPoint> rangeByT(STRegion range);//
 
 	public List<PlaceData> getPlacesByRange(STRegion range);//
 

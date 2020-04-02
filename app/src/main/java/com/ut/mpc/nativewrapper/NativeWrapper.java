@@ -163,12 +163,14 @@ public class NativeWrapper implements STStorage {
     }
 
     @Override
-    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n) {
+//    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n) {
+    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n, int dim) {
         return null;
     }
 
     @Override
-    public List<STPoint> getSequence(STPoint start, STPoint end) {
+//    public List<STPoint> getSequence(STPoint start, STPoint end) {
+    public List<STPoint> getSequence(STPoint start, STPoint end, int dim) {
         return null;
     }
 
@@ -226,5 +228,6 @@ public class NativeWrapper implements STStorage {
     public void delete(String p){
 //        structure.delete(p);
     }
+    public List<STPoint> rangeByT(STRegion range) {return null;}
 
 }

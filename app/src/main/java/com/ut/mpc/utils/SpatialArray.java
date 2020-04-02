@@ -61,9 +61,10 @@ public class SpatialArray implements STStorage {
     }
 
     @Override
-    public List<STPoint> getSequence(STPoint start, STPoint end) {
-        return null;
-    }
+    public List<STPoint> getSequence(STPoint start, STPoint end, int dim) {return null;}
+//    public List<STPoint> getSequence(STPoint start, STPoint end) {
+//        return null;
+//    }
 
     @Override
     public void clear() {
@@ -85,7 +86,8 @@ public class SpatialArray implements STStorage {
     }
 
     @Override
-    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n) {
+//    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n) {
+    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n, int dim){
 
         //TODO support more than one nearest neighbor
         if(n != 1){
@@ -145,5 +147,7 @@ public class SpatialArray implements STStorage {
     }//
     public void delete(String p){
     }//
+
+    public List<STPoint> rangeByT(STRegion range) {return null;}
 
 }

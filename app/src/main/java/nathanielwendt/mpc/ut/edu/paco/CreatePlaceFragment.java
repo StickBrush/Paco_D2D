@@ -60,6 +60,7 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
 import com.karumi.dexter.listener.single.PermissionListener;
+import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 
 import java.io.ByteArrayOutputStream;
@@ -147,6 +148,7 @@ public class CreatePlaceFragment extends Fragment {
         if (getArguments() != null) {
             String boundsObjAsString = getArguments().getString(ARG_REGION);
             placeBounds = STRegion.fromString(boundsObjAsString);
+            Log.d("LST", placeBounds.toString());
         }
     }
 
@@ -277,7 +279,11 @@ public class CreatePlaceFragment extends Fragment {
             if(storagePermissions){
                 //PlaceStore placeStore = new PlaceStore(getActivity());
                 //placeStore.put(placeTitle.getText().toString(), posterPath, placeBounds);
-                ((MainActivity)getActivity()).getFilter().insert(placeBounds.getMins(), placeTitle.getText().toString(), posterPath);//
+                float mid_x = (placeBounds.getMins().getX()+placeBounds.getMaxs().getX())/2;//
+                float mid_y = (placeBounds.getMins().getY()+placeBounds.getMaxs().getY())/2;//
+                STPoint insertPoint = new STPoint(mid_x, mid_y, placeBounds.getMins().getT());//
+                Log.d("LST", insertPoint.toString());
+                ((MainActivity)getActivity()).getFilter().insert(insertPoint, placeTitle.getText().toString(), posterPath);//
                 mListener.onCreatePlaceDone();
             } else {
                 Dexter.checkPermissions(storagePermissionsListener, Manifest.permission.READ_EXTERNAL_STORAGE,

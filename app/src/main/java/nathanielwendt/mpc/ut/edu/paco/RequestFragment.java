@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -20,23 +19,17 @@ import androidx.fragment.app.Fragment;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
-import nathanielwendt.mpc.ut.edu.paco.Data.NotificationDataAdapter;
-import nathanielwendt.mpc.ut.edu.paco.Data.PlaceDataAdapter;
 import nathanielwendt.mpc.ut.edu.paco.Data.UserData;
 import nathanielwendt.mpc.ut.edu.paco.Data.UserDataAdapter;
-import nathanielwendt.mpc.ut.edu.paco.Data.sendData;
+import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.sendData;
 
 public class RequestFragment extends Fragment {
 
@@ -76,7 +69,6 @@ public class RequestFragment extends Fragment {
         //place SEND
         Bundle bundle=getArguments();
         if(bundle != null){
-            Log.d("system", "bundle is not null");
             //map -> request
             if(getArguments().getString("message")!=null && getArguments().getString("message")!=""){
                 in_message.setText(getArguments().getString("message"));
@@ -90,28 +82,23 @@ public class RequestFragment extends Fragment {
                 editor.putString(key, data);
                 editor.commit();
 
-                //Log.d("system", "in_message");
                 bundle.clear();
-                //bundle.putString("message", "");
             }
             //select user -> request
             else if(getArguments().getString("name")!=null && getArguments().getString("token")!=null && getArguments().getString("requestRange")!=null){
-                Log.d("system", "in_after");
                 in_title.setText("Request From" + getArguments().getString("name"));
                 in_message.setText(getArguments().getString("requestRange"));
                 receiverToken.setText(getArguments().getString("token"));
             }
             else{
-                Log.d("system", "NOne of them");
             }
         }
-        else{Log.d("system", "bundle is null");}
 
         //default for firebase
         btn_req_send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ((MainActivity)getActivity()).SEND(sendData());
+                ((MainActivity)getActivity()).mPaco.SEND(sendData());
             }
         });
 
@@ -124,7 +111,7 @@ public class RequestFragment extends Fragment {
                             btn_req_send.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    ((MainActivity)getActivity()).sendMQTT(sendData());
+                                    ((MainActivity)getActivity()).mPaco.sendMQTT(sendData());//
 
                                 }
                             });
@@ -133,7 +120,7 @@ public class RequestFragment extends Fragment {
                             btn_req_send.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    ((MainActivity)getActivity()).SEND(sendData());
+                                    ((MainActivity)getActivity()).mPaco.SEND(sendData());//
 
                                 }
                             });
@@ -148,7 +135,6 @@ public class RequestFragment extends Fragment {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     ArrayList<UserData> nearbyDevicesArrayList = collectUsers((Map<String,Object>) dataSnapshot.getValue());
-                    //mNearbyDevicesArrayAdapter = new ArrayAdapter<String>((MainActivity)getActivity(), android.R.layout.simple_list_item_1, nearbyDevicesArrayList);
                     mNearbyDevicesArrayAdapter = new UserDataAdapter(getActivity(), mListener, nearbyDevicesArrayList);
                     nearby_list_view.setAdapter(mNearbyDevicesArrayAdapter);
                 }
@@ -234,8 +220,8 @@ public class RequestFragment extends Fragment {
 
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        //public void onFragmentInteraction(String id);
-        //public double windowPoK(STRegion region);
+        public void onFragmentInteraction(String id);
+        public double windowPoK(STRegion region);
     }
 
     private boolean CheckNearby(String OtherLocation){

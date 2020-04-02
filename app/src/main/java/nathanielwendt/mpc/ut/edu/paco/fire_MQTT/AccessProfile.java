@@ -1,10 +1,10 @@
-package nathanielwendt.mpc.ut.edu.paco.Data;
+package nathanielwendt.mpc.ut.edu.paco.fire_MQTT;
 
 import com.ut.mpc.setup.Constants;
 
 public class AccessProfile {
 
-    private Double GridFactor;
+    private double GridFactor;
     private float minSpaceWindow;
     private float minTempWindow;
 
@@ -26,6 +26,12 @@ public class AccessProfile {
         this.GridFactor = 2.0;
         this.minSpaceWindow = 0;
         this.minTempWindow = 0;
+    }
+
+    public AccessProfile(Double GridFactor, float minSpaceWindow, float minTempWindow){
+        this.GridFactor = GridFactor;
+        this.minSpaceWindow = minSpaceWindow;
+        this.minTempWindow = minTempWindow;
     }
 
     public void updateProfile(int accessLevel){

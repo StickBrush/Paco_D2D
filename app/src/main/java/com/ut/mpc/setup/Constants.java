@@ -1,5 +1,7 @@
 package com.ut.mpc.setup;
 
+import android.util.Log;
+
 import com.ut.mpc.utils.GPSLib;
 import com.ut.mpc.utils.STPoint;
 

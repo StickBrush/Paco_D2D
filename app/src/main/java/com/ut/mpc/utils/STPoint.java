@@ -66,7 +66,7 @@ public class STPoint {
 	}
 	
 	public boolean hasT(){ return !Float.isNaN(this.t); }
-	
+
 	public void updateMin(STPoint next){
         if(!this.hasX()){
             this.x = next.getX();

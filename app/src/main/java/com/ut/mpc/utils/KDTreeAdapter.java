@@ -64,12 +64,14 @@ public class KDTreeAdapter implements STStorage {
     }
 
     @Override
-    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n) {
+//    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n) {
+    public List<STPoint> nearestNeighbor(STPoint needle, STPoint boundValues, int n, int dim){
         throw new RuntimeException("naive structure shouldn't need this method");
     }
 
     @Override
-    public List<STPoint> getSequence(STPoint start, STPoint end) {
+//    public List<STPoint> getSequence(STPoint start, STPoint end) {
+    public List<STPoint> getSequence(STPoint start, STPoint end, int dim) {//
         throw new RuntimeException("naive structure shouldn't need this method");
     }
 
@@ -128,6 +130,9 @@ public class KDTreeAdapter implements STStorage {
     public void delete(String p){
 //        structure.delete(p);
     }
+
+    @Override
+    public List<STPoint> rangeByT(STRegion range) {return null;}
 
 }
 

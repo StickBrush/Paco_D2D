@@ -22,14 +22,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.firebase.ui.auth.data.model.User;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -40,61 +32,67 @@ import androidx.appcompat.widget.Toolbar;
 
 import androidx.preference.PreferenceManager;
 
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
+import android.widget.Button;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonObject;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
 import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
+import com.ut.mpc.paco.Paco;
 import com.ut.mpc.setup.Initializer;
 import com.ut.mpc.utils.LSTFilter;
-import com.ut.mpc.utils.QueryWindow;
+import com.ut.mpc.utils.LSTFilterException;
 import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
-import nathanielwendt.mpc.ut.edu.paco.Data.AccessProfile;
-import nathanielwendt.mpc.ut.edu.paco.Data.NotificationData;
+import io.moquette.BrokerConstants;
+import io.moquette.server.config.MemoryConfig;
+import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.AccessProfile;
 import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 import nathanielwendt.mpc.ut.edu.paco.Data.SettingData;
 import nathanielwendt.mpc.ut.edu.paco.Data.UserData;
-import nathanielwendt.mpc.ut.edu.paco.Data.sendData;
+import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.paco;
+import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.sendData;
 import nathanielwendt.mpc.ut.edu.paco.utils.SQLiteRTree;
 import nathanielwendt.mpc.ut.edu.paco.utils.notificationStore;
 
-import static com.ut.mpc.setup.Constants.PoK.T_CUBE;
-import static com.ut.mpc.setup.Constants.PoK.X_CUBE;
-import static com.ut.mpc.setup.Constants.PoK.Y_CUBE;
-import static com.ut.mpc.setup.Initializer.vehicularDefaults;
 import static com.ut.mpc.setup.Initializer.pedDefaults;
 
 import android.location.Criteria;
@@ -116,16 +114,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
-
-import com.google.android.gms.nearby.Nearby;
-import com.google.android.gms.nearby.messages.Message;
-import com.google.android.gms.nearby.messages.MessageListener;
-import com.google.android.gms.nearby.messages.MessagesClient;
-import com.google.android.gms.nearby.messages.PublishCallback;
-import com.google.android.gms.nearby.messages.PublishOptions;
-import com.google.android.gms.nearby.messages.Strategy;
-import com.google.android.gms.nearby.messages.SubscribeCallback;
-import com.google.android.gms.nearby.messages.SubscribeOptions;
+//
+//import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.paco;
 
 public class MainActivity extends AppCompatActivity implements PlacesFragment.OnFragmentInteractionListener, NotificationsFragment.OnFragmentInteractionListener,
         MapFragment.MapFragmentListener, CreatePlaceFragment.CreatePlaceFragmentDoneListener {
@@ -135,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
     private LatLng lastLoc = Constants.DEFAULT_LAT_LNG;
     private Toolbar toolbar;
     private FragmentHelper fHelper;
+    private PopupWindow popupWindow;//
 
     private String TOOLBAR_TRACKING;
     private String TOOLBAR_PLAIN ;
@@ -163,11 +154,11 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
     String clientID;
     private UserData user = new UserData();
     private FirebaseDatabase mDatabase = FirebaseDatabase.getInstance();
-    //private DatabaseReference mDatabaseReference = mDatabase.getReference().child("user");
     private DatabaseReference mDatabaseReference;
 
     private LSTFilter filter;
-//    public LSTFilter filter;//
+    //Paco paco;//
+    paco mPaco;//
 
     static {
         System.loadLibrary("sqliteX");
@@ -175,6 +166,12 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Initializer initializer = pedDefaults();
+        //Initializer initializer = vehicularDefaults();
+        SQLiteRTree rtree = new SQLiteRTree(this, "RTreeMain");
+        filter = new LSTFilter(rtree, initializer);//
+        filter.setRefPoint(new STPoint((float) lastLoc.longitude, (float) lastLoc.latitude, 0));
+
         //Location
         LocationManager status = (LocationManager) (this.getSystemService(Context.LOCATION_SERVICE));
         if(status.isProviderEnabled(LocationManager.GPS_PROVIDER)|| status.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
@@ -197,11 +194,21 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
         Receiver=new Receiver();
 
-        Initializer initializer = vehicularDefaults();//Success
-//        Initializer initializer = pedDefaults();//Fail
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        mPaco = new paco(getBaseContext(), this, filter);//
+
+        io.moquette.server.Server server = new io.moquette.server.Server();
+        try {
+            MemoryConfig memoryConfig = new MemoryConfig(new Properties());
+            memoryConfig.setProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME, Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator + BrokerConstants.DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME);
+            server.startServer(memoryConfig);
+            // server.startServer();//is not working due to DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME;
+            //Log.d(TAG,"Server Started");
+        }
+        catch (IOException e) { e.printStackTrace(); }
+        catch (Exception e){ e.printStackTrace(); }
         //get Firebase Token
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
@@ -231,10 +238,14 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
                         //MQTT Client
                         clientID = clientId;
-                        final String url = "tcp://192.168.0.104";
-//                        final String url = "tcp://10.147.88.144";
+                        final String url = "tcp://10.0.2.2:1883";
+                        //final String url = "tcp://192.168.0.104";
+                        //final String url = "tcp://10.147.88.144";
                         client =
                                 new MqttAndroidClient(MainActivity.this, url, clientId);
+
+                        mPaco.setClientId(clientId);////
+                        mPaco.setMQTTClient(client);////
 
                         try {
                             IMqttToken token = client.connect(options);
@@ -274,24 +285,7 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                                 //HaldleMQTTMessage(message, currentToken);
                                 DateFormat df = new SimpleDateFormat("MMM d, yyyy HH:mm:ss");
                                 String ts = df.format(new Date());
-
-                                JSONObject jsonData = new JSONObject(message);
-                                JSONObject json_data = jsonData.getJSONObject("data");
-                                JSONObject json_stage = json_data.getJSONObject("Stage");
-                                String Stage = json_stage.get("CurrStage").toString();
-
-                                sendData SendData = new sendData();
-                                SendData.setTimeStamp(ts);
-                                SendData.setStage(Integer.parseInt(Stage));
-                                SendData.setMessage(message);
-
-                                //updateNotificationList(SendData.HandleMQTTData());
-                                String not1 =  SendData.HandleMQTTData().get(0);
-                                String not2 =  SendData.HandleMQTTData().get(1);
-                                String[] not = {not1, not2};
-                                updateNotificationList(not);
-                                //check Permission
-                                //updateList(title, description, image);
+                                mPaco.respondTOMQTTRequest(message, ts, getAccessProfile());
 
                             }
 
@@ -315,9 +309,9 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
         //SharedPreferences sharedpreferences = getSharedPreferences("Places", Context.MODE_PRIVATE);
         //sharedpreferences.edit().clear().commit();
-        SQLiteRTree rtree = new SQLiteRTree(this, "RTreeMain");
-        filter = new LSTFilter(rtree, initializer);//
-        filter.setRefPoint(new STPoint((float) lastLoc.longitude, (float) lastLoc.latitude, 0));
+        //SQLiteRTree rtree = new SQLiteRTree(this, "RTreeMain");
+        //filter = new LSTFilter(rtree, initializer);//
+        //filter.setRefPoint(new STPoint((float) lastLoc.longitude, (float) lastLoc.latitude, 0));
 
         Dexter.initialize(this);
 
@@ -335,100 +329,9 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                 .findViewById(android.R.id.content)).getChildAt(0);
 
         fHelper.show("PlacesFragment", new PlacesFragment(), true);
-    }
 
-//    @Override
-//    public void onStart() {
-//        super.onStart();
-//
-//        Nearby.getMessagesClient(this).publish(mMessage);
-//        Nearby.getMessagesClient(this).subscribe(mMessageListener);
-//    }
-//
-//    @Override
-//    public void onStop() {
-//        Nearby.getMessagesClient(this).unpublish(mMessage);
-//        Nearby.getMessagesClient(this).unsubscribe(mMessageListener);
-//
-//        super.onStop();
-//    }
-//
-//    private void signIn() {
-//        // Launches the sign in flow, the result is returned in onActivityResult
-//        Intent intent = mGoogleSignInClient.getSignInIntent();
-//        startActivityForResult(intent, RC_SIGN_IN);
-//    }
-//
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//
-//        if (requestCode == RC_SIGN_IN) {
-//            Task<GoogleSignInAccount> task =
-//                    GoogleSignIn.getSignedInAccountFromIntent(data);
-//            if (task.isSuccessful()) {
-//                // Sign in succeeded, proceed with account
-//                GoogleSignInAccount acct = task.getResult();
-//            } else {
-//                // Sign in failed, handle failure and update UI
-//                // ...
-//            }
-//        }
-//    }
-//
-////    private void buildGoogleApiClient() {
-////        if (mGoogleApiClient != null) {
-////            return;
-////        }
-////        mGoogleApiClient = new GoogleApiClient.Builder(this)
-////                .addApi(Nearby.MESSAGES_API)
-////                .addConnectionCallbacks(this)
-////                .enableAutoManage(this, this)
-////                .build();
-////    }
-//
-//    /**
-//     * Publishes a message to nearby devices and updates the UI if the publication either fails or
-//     * TTLs.
-//     */
-//    private void publish() {
-//        Log.i(TAG, "Publishing");
-//        PublishOptions options = new PublishOptions.Builder()
-//                .setStrategy(PUB_SUB_STRATEGY)
-//                .setCallback(new PublishCallback() {
-//                    @Override
-//                    public void onExpired() {
-//                        super.onExpired();
-//                        Log.i(TAG, "No longer publishing");
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                //mPublishSwitch.setChecked(false);
-//                            }
-//                        });
-//                    }
-//                }).build();
-//
-//        Nearby.Messages.publish( mGoogleApiClient, mPubMessage, options)
-//                .setResultCallback(new ResultCallback<Status>() {
-//                    @Override
-//                    public void onResult(@NonNull Status status) {
-//                        if (status.isSuccess()) {
-//                            Log.i(TAG, "Published successfully.");
-//                        } else {
-//                            //logAndShowSnackbar("Could not publish, status = " + status);
-//                            //mPublishSwitch.setChecked(false);
-//                        }
-//                    }
-//                });
-//    }
-//    /**
-//     * Stops publishing message to nearby devices.
-//     */
-//    private void unpublish() {
-//        Log.i(TAG, "Unpublishing.");
-//        Nearby.Messages.unpublish(mGoogleApiClient, mPubMessage);
-//    }
+        //loadFile(getApplicationContext(),"Residents.json", filter);
+    }
 
     //Receive notification from FireBase
     private class Receiver extends BroadcastReceiver {
@@ -436,63 +339,61 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         public void onReceive(Context context, Intent intent) {
             DateFormat df = new SimpleDateFormat("MMM d, yyyy HH:mm:ss");
             String ts = df.format(new Date());
-
-            try {
-                String message = intent.getStringExtra("FirebaseData");
-                JSONObject jsonData = new JSONObject(message);
-                JSONObject json_stage = jsonData.getJSONObject("Stage");
-                String Stage = json_stage.get("CurrStage").toString();
-
-                sendData SendData = new sendData();
-                SendData.setTimeStamp(ts);
-                SendData.setStage(Integer.parseInt(Stage));
-                SendData.setMessage(message);
-
-                //check Permission
-                if(SendData.getStage() == 1){
-                    String not1 =  SendData.HandleFireData().get(0);
-                    String not2 =  SendData.HandleFireData().get(1);
-                    String[] not = {not1, not2};
-                    updateNotificationList(not);
-
-                    SendData.setSenderToken(getTheCurrentClient());//
-                    SendData.setDataOwnderToken(getTheCurrentClient());//
-
-                    if(checkRequestPermission(SendData.getRequestRange())){
-                        SendData.setPermission(true);
-                        STRegion region = STRegion.fromString(SendData.getRequestRange());
-                        List<PlaceData> places = filter.getPlacesByRange(region);
-                        SendData.setTitle("Request Places");
-                        SendData.setPlacesInfo(places);
-                        SEND(SendData.getSendData());
-                    }
-                    else{
-                        SendData.setPermission(false);
-                        SendData.setMessage("");
-                        SEND(SendData.getSendData());
-                    }
-                }
-                if(SendData.getStage() == 2){
-                    //whether request is accepted
-                    JSONObject json_permission = jsonData.getJSONObject("Permission");
-                    String permission = json_permission.get("Permission").toString();
-                    SendData.setPermission(Boolean.valueOf(permission));
-                    List<String> placeGet =  SendData.HandleFireData();
-                    if(Boolean.valueOf(permission)){
-                        for(int i =0; i<placeGet.size(); i+=2){
-                            updateList(placeGet.get(i), placeGet.get(i+1), "");//
-                        }
-                    } else{
-                        Toast.makeText(MainActivity.this,"Permission Denied", Toast.LENGTH_LONG).show();
-                    }
-                }
-
-            } catch (JSONException e) {
-                //Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_SHORT).show();
-                Log.d("JSONException", e.toString());
-            }
+            mPaco.respondTORequest(intent, ts, accessProfile);//
         }
     };
+
+    public void PopupWindowAccept(String PoK, final sendData SendData, final String type) {
+        View view = LayoutInflater.from(MainActivity.this)
+                .inflate(R.layout.pop_window_accept, null);
+        popupWindow = new PopupWindow(view);
+        popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+        popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        TextView PoKText = (TextView) view.findViewById(R.id.PoK_text);
+        PoKText.setText("PoK is " + PoK);
+
+        Button btn_YES = (Button) view.findViewById(R.id.Yes);
+        btn_YES.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(type=="Fire"){
+                    mPaco.SEND(SendData.getSendData());//
+                }else{
+                    mPaco.sendMQTT(SendData.getSendData());//
+                }
+                popupWindow.dismiss();
+            }
+        });
+
+        Button btn_NO = (Button) view.findViewById(R.id.No);
+        btn_NO.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                popupWindow.dismiss();
+            }
+        });
+
+        popupWindow.showAtLocation(view, Gravity.CENTER_HORIZONTAL, 0, 0);
+    }
+
+    public void PopupWindowDeny(String PoK, final sendData SendData) {
+        View view = LayoutInflater.from(MainActivity.this)
+                .inflate(R.layout.pop_window_deny, null);
+        popupWindow = new PopupWindow(view);
+        popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+        popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            TextView PoKText = (TextView) view.findViewById(R.id.PoK_text);
+            PoKText.setText("PoK is " + PoK);
+
+            Button btn_OK = (Button) view.findViewById(R.id.OK);
+            btn_OK.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    popupWindow.dismiss();
+                }
+            });
+
+        popupWindow.showAtLocation(view, Gravity.CENTER_HORIZONTAL, 0, 0);
+    }
 
     //Firebase Get Token
     private void getTokenFirebase() {
@@ -505,81 +406,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                         }
                     }
                 });
-    }
-
-    //FireBase : SEND
-    public void SEND(String data)
-    {
-        final String savedata= data;
-        String URL="https://fcm.googleapis.com/fcm/send";
-
-        requestQueue = Volley.newRequestQueue(MainActivity.this);
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                try {
-                    JSONObject objres=new JSONObject(response);
-                    Toast.makeText(MainActivity.this,"Firebase Send Successfully ",Toast.LENGTH_LONG).show();
-
-                } catch (JSONException e) {
-                    Toast.makeText(MainActivity.this,"Server Error",Toast.LENGTH_LONG).show();
-
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-                Toast.makeText(MainActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
-
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("Authorization", "key=AAAADZqMCa0:APA91bEPutekx6WZKNG9ekiishPS1g-dZhJiSsq1uZWgLpsWtuJ0-wePj-LU7KdKv6h0J4ZawlY4BrZ_nReIhG6zf-AeLNA8wpDeJmQ8YQCPAywJ9lT51hKiiO54BWbDdAUd91eEObzT");
-                return headers;
-            }
-
-            @Override
-            public String getBodyContentType() {
-                return "application/json; charset=utf-8";
-            }
-
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                try {
-                    return savedata == null ? null : (savedata).getBytes("utf-8");
-                } catch (UnsupportedEncodingException uee) {
-                    //Log.v("Unsupported Encoding while trying to get the bytes", data);
-                    return null;
-                }
-            }
-
-        };
-        requestQueue.add(stringRequest);
-    }
-
-    //MQTT: SEND
-    public void sendMQTT(String message){
-        byte[] encodedMessage = new byte[0];
-        String strMessage;
-        try {
-            try{
-                JSONObject inMessage = new JSONObject(message);
-                strMessage = inMessage.toString();
-            }
-            catch (JSONException e){
-                strMessage = "";
-            }
-            encodedMessage = strMessage.getBytes("UTF-8");
-            MqttMessage fianl_message = new MqttMessage(encodedMessage);
-            client.publish("Firebase_MQTT", fianl_message);
-            Toast.makeText(MainActivity.this, "Send to MQTT Successfully", Toast.LENGTH_SHORT).show();
-        } catch (UnsupportedEncodingException | MqttException e) {
-            e.printStackTrace();
-            Toast.makeText(MainActivity.this, "Failed to Send", Toast.LENGTH_SHORT).show();
-        }
     }
 
     //Subscribe for MQTT
@@ -608,113 +434,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                 e.printStackTrace();
             }
             isSubTopic.add(topic);
-        }
-    }
-
-    public boolean checkRequestPermission(String range){
-        STRegion region = STRegion.fromString(range);
-
-        float range_x = region.getMaxs().getX() - region.getMins().getX();
-        float range_y = region.getMaxs().getY() - region.getMins().getY();
-        float range_t = region.getMaxs().getT() - region.getMins().getT();
-
-        float S_RANGE = accessProfile.getMinSpaceWindow();
-        float T_RANGE = accessProfile.getMinTempWindow();
-
-        if(S_RANGE <= range_x && S_RANGE <= range_y && (T_RANGE <= range_t || T_RANGE == 0.0) ){
-            Log.d("RnageRnage", "A"+true);
-            return true;
-        }
-        else{
-            Log.d("RnageRnage", "A"+false);
-            return false;
-        }
-
-    }
-
-//    public boolean checkRequestPermission(String range){
-//        float xGridGran = X_CUBE;
-//        float yGridGran = Y_CUBE;
-//        float tGridGran = T_CUBE;
-//        STRegion region = STRegion.fromString(range);
-//
-//        Log.d("checkRequestPermissionregion", region.toString());
-//        float range_x = region.getMaxs().getX() - region.getMins().getX();
-//        float range_y = region.getMaxs().getY() - region.getMins().getY();
-//        float range_t = region.getMaxs().getT() - region.getMins().getT();
-//        STPoint reqMax = region.getMaxs();
-//        STPoint reqMin = region.getMins();
-//
-//        float gran = (float)setData.getGranValue();
-//
-//        if((double)xGridGran*(double)gran > (double)range_x || (double) yGridGran*(double)gran > (double)range_y || (double)tGridGran*(double)gran> (double)range_t){
-//            return false;
-//        }
-//        else{
-//            STPoint perMax;
-//            STPoint perMin;
-//            String RangeValue = setData.getRangeValue();
-//            if(RangeValue.equals("all")){
-//                return true;
-//            }
-//            else{
-//                STRegion perRegion = STRegion.fromString(RangeValue);
-//                perMax = perRegion.getMaxs();/////
-//                perMin = perRegion.getMins();/////
-//
-//                if( (double)reqMax.getX()>(double)perMax.getX() || (double)reqMax.getY()>(double)perMax.getY() || (double)reqMax.getT()>(double)perMax.getT()
-//                    || (double)reqMin.getX()<(double)perMin.getX() || (double)reqMin.getY()<(double)perMin.getY() && (double)reqMin.getT()<(double)perMin.getT()
-//                ){Log.d("checkRequestPermission1", "YYY");
-//                    return false;
-//                } else {
-//                    Log.d("checkRequestPermission2", "NNN");
-//                    return true;
-//                }
-//            }
-//        }
-//    }
-
-    //upadate Place
-    public void updateList(String title, String description, String image){
-        //update data
-        //STRegion region;
-        STPoint location;
-        //PlaceStore placeStore = new PlaceStore(MainActivity.this);
-
-        //Log.d("checkRequestPermission3", description);
-        location = STPoint.fromString(description);//
-
-
-        if(!"".equals(image)) {
-            try {
-                Bitmap bitImage = StringToBitMap(image);
-                Uri imUri = getImageUri(getApplicationContext(), bitImage, title);
-                //String posterPath = getRealPathFromURI(imUri);
-                //placeStore.put(title, posterPath, region);
-                this.filter.insert(location, title, imUri.toString());/////??imUri.toString()
-            } catch (Exception e) {
-                Log.d("Exception", e.toString());
-            }
-        } else{
-            this.filter.insert(location, title, "");
-        }
-
-        //refresh page
-        Fragment frag = MainActivity.this.getSupportFragmentManager().findFragmentByTag("PlacesFragment");
-        if(frag.isVisible()){
-            fHelper.show("PlacesFragment", new PlacesFragment());
-        }
-    }
-
-    //upadate Notification
-    public void updateNotificationList(String[] notification){
-        notificationStore NotificationStore = new notificationStore(this);
-        NotificationStore.put(notification[0], notification[1]);
-
-        //refresh page
-        Fragment frag = MainActivity.this.getSupportFragmentManager().findFragmentByTag("NotificationFragment");
-        if(frag!=null && frag.isVisible()){
-            fHelper.show("NotificationFragment", new NotificationsFragment());
         }
     }
 
@@ -794,42 +513,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
             mDatabaseReference.setValue(user);
         }
     };
-
-    //image
-    public Uri getImageUri(Context inContext, Bitmap inImage, String title) {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, title, null);
-        return Uri.parse(path);
-    }
-
-    private String getRealPathFromURI(Uri contentUri)
-    {
-        try
-        {
-            String[] proj = {MediaStore.Images.Media.DATA};
-            Cursor cursor = this.getContentResolver().query(contentUri, proj, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        }
-        catch (Exception e)
-        {
-            return contentUri.getPath();
-        }
-    }
-
-    public Bitmap StringToBitMap(String encodedString){
-        try{
-            byte [] encodeByte = Base64.decode(encodedString,Base64.DEFAULT);
-            Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
-            return bitmap;
-        }
-        catch(Exception e){
-            e.getMessage();
-            return null;
-        }
-    }
 
 
 
@@ -934,16 +617,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
             fHelper.show(tag, new SettingFragment());
             return true;
         }
-//        else if(id == R.id.action_send_places) {
-//            tag = "SendFragment";
-//            fHelper.show(tag, new SendFragment());
-//            return true;
-//        }
-//        else if(id == R.id.action_request_places) {
-//            tag = "RequestFragment";
-//            fHelper.show(tag, new RequestFragment());
-//            return true;
-//        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -971,6 +644,35 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
     @Override
     public void onCreatePlaceDone() {
         fHelper.show("PlacesFragment", new PlacesFragment(), true);
+    }
+
+    //Load data from Residents.json....
+    public void loadFile(Context context, String FileName, LSTFilter filter) {
+        String json = null;
+        try {
+            InputStream is = context.getAssets().open(FileName);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, "UTF-8");
+
+            try {
+                JSONObject inData = new JSONObject(json);
+                JSONArray jsonArray = inData.getJSONArray("Resident");
+                for(int i=0;i<jsonArray.length(); ++i) {
+                    JSONObject data = new JSONObject();
+                    String name = jsonArray.getJSONObject(i).getString("Name");
+                    STPoint Location = STPoint.fromString(jsonArray.getJSONObject(i).getString("Location"));
+                    filter.insert(Location, name, "");
+                }
+            } catch (JSONException e){
+                Log.e("loadError", e.toString());
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
 }

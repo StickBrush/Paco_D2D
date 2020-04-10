@@ -52,4 +52,66 @@
         android:layout_marginTop="20dp"
         android:background="#1E90FF"/>
 
+    <Spinner
+        android:id="@+id/key_type"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/access_level"
+        android:layout_marginTop="50dp"
+        android:hint="Data Type"/>
+
+    <Spinner
+        android:id="@+id/key_level"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/key_type"
+        android:layout_marginTop="20dp"
+        android:text="[Select a Key Level]"/>
+
+
+    <Button
+        android:id="@+id/btn_set_key"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Done"
+        android:layout_toRightOf="@+id/key_level"
+        android:layout_below="@+id/access_level"
+        android:layout_marginTop="50dp"
+        android:background="#1E90FF"/>
+
+    <Spinner
+        android:id="@+id/config_key_Level"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/key_level"
+        android:layout_marginTop="50dp"
+        android:text="[Select a Key Level]"/>
+
+    <Spinner
+        android:id="@+id/SharingIdentity"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/config_key_Level"
+        android:layout_marginTop="20dp"
+        android:text="[Select a Type of People]"/>
+
+    <Spinner
+        android:id="@+id/SharingLocation"
+        android:layout_width="275dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/SharingIdentity"
+        android:layout_marginTop="20dp"
+        android:text="[Select a Key Level]"/>
+
+
+    <Button
+        android:id="@+id/btn_key_config"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Done"
+        android:layout_toRightOf="@+id/SharingLocation"
+        android:layout_below="@+id/key_level"
+        android:layout_marginTop="50dp"
+        android:background="#1E90FF"/>
+
 </RelativeLayout>

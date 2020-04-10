@@ -26,8 +26,8 @@ public class Constants {
     public static final int LOC_FASTEST_INTERVAL = 1000; // ms
 
     public static final int DEFAULT_MAP_ZOOM = 11;
-    //public static final LatLng DEFAULT_LAT_LNG = new LatLng(30.3175497, -97.7175272); //austin
-    public static final LatLng DEFAULT_LAT_LNG = new LatLng(46.0711, 11.1165); //trento
+    public static final LatLng DEFAULT_LAT_LNG = new LatLng(30.3175497, -97.7175272); //austin
+    //public static final LatLng DEFAULT_LAT_LNG = new LatLng(46.0711, 11.1165); //trento
 
 
     public static final double LOCATION_RADIUS = 0.2; //km

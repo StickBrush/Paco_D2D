@@ -7,6 +7,7 @@ public class AccessProfile {
     private double GridFactor;
     private float minSpaceWindow;
     private float minTempWindow;
+    private int accessLevel;
 
     public Double getGridFactor() { return GridFactor; }
 
@@ -22,10 +23,15 @@ public class AccessProfile {
 
     public void setMinTempWindow(float minWindowSize) { this.minTempWindow = minTempWindow; }
 
+    public int getAccessLevel() { return accessLevel; }
+
+    public void setAccessLevel(int accessLevel) { this.accessLevel = accessLevel; }
+
     public AccessProfile(){
         this.GridFactor = 2.0;
         this.minSpaceWindow = 0;
         this.minTempWindow = 0;
+        this.accessLevel = 1;
     }
 
     public AccessProfile(Double GridFactor, float minSpaceWindow, float minTempWindow){
@@ -39,16 +45,19 @@ public class AccessProfile {
             this.setGridFactor(2.0);
             this.setMinSpaceWindow(0);
             this.setMinTempWindow(0);//
+            this.accessLevel = 1;
         }
         else if(accessLevel == 2){
             this.setGridFactor(1.0);
             this.setMinSpaceWindow(5* Constants.PoK.SPACE_RADIUS);
             this.setMinTempWindow(5* Constants.PoK.TEMPORAL_RADIUS);
+            this.accessLevel = 2;
         }
         else if(accessLevel == 3){
             this.setGridFactor(0.5);
             this.setMinSpaceWindow(20* Constants.PoK.SPACE_RADIUS);
             this.setMinTempWindow(20* Constants.PoK.TEMPORAL_RADIUS);
+            this.accessLevel = 3;
         }
         else{}
     }

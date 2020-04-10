@@ -94,6 +94,31 @@ public class sendData {
         this.PoK = PoK;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) { this.type = type; }
+
+    public ArrayList<String> getKeyhole() {
+        return keyhole;
+    }
+
+    public void setKeyhole(ArrayList<String> keyhole) { this.keyhole = keyhole; }
+
+    public JSONObject getKey() {
+        return key;
+    }
+
+    public void setKey(JSONObject key) { this.key = key; }
+
+    public boolean getShowPoK() {
+        return showPoK;
+    }
+
+    public void setShowPoK(boolean showPoK) { this.showPoK = showPoK; }
+
+
     private int stage;
     private String dataOwnderToken;
     private String requesterToken;
@@ -106,6 +131,10 @@ public class sendData {
     private boolean permission;
     private List<PlaceData> placesInfo;
     private String PoK;
+    private String type;
+    private ArrayList<String> keyhole;
+    private JSONObject key;
+    private boolean showPoK;
 
     public sendData(){
     }
@@ -113,7 +142,67 @@ public class sendData {
     //Handle receive message
     public List<String> HandleFireData(){
         //Data Owner Handle Request
-        if(this.stage == 1){
+        if(this.stage == -2){
+            try {
+                JSONObject jsonData = new JSONObject(message);
+                JSONObject json_token = jsonData.getJSONObject("Token");
+                JSONObject json_params = jsonData.getJSONObject("params");
+                String token = json_token.getString("SenderToken");
+                String title = json_params.get("title").toString();
+                String range = json_params.get("range").toString();
+                this.setTitle(title);
+                this.setRequestRange(range);
+                this.setRequesterToken(token);
+
+                return null;
+
+            } catch (JSONException e) {
+                Log.d("JSONException", e.toString());
+                return null;
+            }
+        }
+
+        else if(this.stage == -1){
+            try {
+                JSONObject jsonData = new JSONObject(message);
+                JSONObject json_token = jsonData.getJSONObject("Token");
+                JSONObject json_params = jsonData.getJSONObject("params");
+                String token = json_token.getString("SenderToken");
+                String title = json_params.get("title").toString();
+                String range = json_params.get("range").toString();
+                this.setTitle(title);
+                this.setRequestRange(range);
+                this.setDataOwnderToken(token);
+
+                return null;
+
+            } catch (JSONException e) {
+                Log.d("JSONException", e.toString());
+                return null;
+            }
+        }
+
+//        else if(this.stage == 0){
+//            try {
+//                JSONObject jsonData = new JSONObject(message);
+//                JSONObject json_token = jsonData.getJSONObject("Token");
+//                JSONObject json_params = jsonData.getJSONObject("params");
+//                String token = json_token.getString("SenderToken");
+//                String title = json_params.get("title").toString();
+//                String range = json_params.get("range").toString();
+//                this.setTitle(title);
+//                this.setRequestRange(range);
+//                this.setRequesterToken(token);
+//
+//                return null;
+//
+//            } catch (JSONException e) {
+//                Log.d("JSONException", e.toString());
+//                return null;
+//            }
+//        }
+
+        else if(this.stage == 1){
             try {
                 JSONObject jsonData = new JSONObject(message);
 
@@ -234,7 +323,55 @@ public class sendData {
 
     public List<String> HandleMQTTData(){
         //Data Owner Handle Request
-        if(this.stage == 1){
+        if(this.stage == -2){
+            try {
+                JSONObject jsonData = new JSONObject(message);
+                JSONObject json_data = jsonData.getJSONObject("data");
+                JSONObject jsonParam = json_data.getJSONObject("params");
+                JSONObject json_token = json_data.getJSONObject("Token");
+                String title = jsonParam.get("title").toString();
+                String range = jsonParam.get("range").toString();
+                String senderToken = json_token.get("SenderToken").toString();
+                //String fireBase_msg = "Title: " + title +"\n" + "Request From: " +"\n" + senderToken +"\n" + "Request Time: " +"\n" + timeStamp + "\n" + "Request Range: " +"\n" + range /*+"\n" + "Latitude: " + latitude +"\n" + "Longitude: " + longitude*/;
+
+                this.setTitle(title);
+                this.setRequestRange(range);
+                this.setRequesterToken(senderToken);
+                return null;
+
+            } catch (JSONException e) {
+                //Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                Log.d("JSONException", e.toString());
+                return null;
+            }
+        }
+
+        else if(this.stage == -1){
+            try {
+                JSONObject jsonData = new JSONObject(message);
+                JSONObject json_data = jsonData.getJSONObject("data");
+                JSONObject jsonParam = json_data.getJSONObject("params");
+
+                JSONObject json_token = json_data.getJSONObject("Token");
+                String title = jsonParam.get("title").toString();
+                String range = jsonParam.get("range").toString();
+                String senderToken = json_token.get("SenderToken").toString();
+                //String fireBase_msg = "Title: " + title +"\n" + "Request From: " +"\n" + senderToken +"\n" + "Request Time: " +"\n" + timeStamp + "\n" + "Request Range: " +"\n" + range /*+"\n" + "Latitude: " + latitude +"\n" + "Longitude: " + longitude*/;
+
+                this.setTitle(title);
+                this.setRequestRange(range);
+                this.setDataOwnderToken(senderToken);
+
+                return null;
+
+            } catch (JSONException e) {
+                //Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_SHORT).show();
+                Log.d("JSONException", e.toString());
+                return null;
+            }
+        }
+
+        else if(this.stage == 1){
             try {
                 JSONObject jsonData = new JSONObject(message);
 
@@ -304,9 +441,7 @@ public class sendData {
         //Data Owner Handle further Request
         else if(this.stage == 3){
             try {
-                Log.d("mqttmessagemqttmessage", "mqttmessagemqttmessage");
                 JSONObject json_data = new JSONObject(message);
-                Log.d("mqttmessagemqttmessage", json_data.toString());
                 JSONObject jsonData = json_data.getJSONObject("data");
                 JSONObject json_token = jsonData.getJSONObject("Token");
                 JSONObject json_params = jsonData.getJSONObject("params");
@@ -336,7 +471,6 @@ public class sendData {
         else if(this.stage == 4){
             try {
                 JSONObject json_data = new JSONObject(message);
-                Log.d("mqttmessagemqttmessage", json_data.toString());
                 JSONObject jsonData = json_data.getJSONObject("data");
                 //JSONObject json_params = jsonData.getJSONObject("params");
 
@@ -363,14 +497,14 @@ public class sendData {
 
     public String getSendData(){
         //starting to make a request
-        if(stage == 0){
+        if(stage == -3){
             String data = "{\n" +
                     "\t\"to\": \"" + this.dataOwnderToken + "\",\n" +
                     "\t\"data\":{\n" +
                     "\t\t\"params\" : {\n" +
                     "\t\t\t\t\"title\" : \"" + this.title + "\",\n" +
-                    "        \t\t\"range\" : \"" + this.message + "\"\n" +
-                    /*"        \t\t\"image\" : \"" + this.uri + "\"\n" +*/
+                    "        \t\t\"range\" : \"" + this.message + "\",\n" +
+                    "        \t\t\"Type\" : \"" + this.type + "\"\n" +
                     "    \t\t\t}\n" +
                     "\t\t\t\n" +
                     "\t\t}\n" +
@@ -385,7 +519,7 @@ public class sendData {
                 //put stage in
                 JSONObject extraStage = new JSONObject();
                 extraStage.put("CurrStage", stage+1);
-                oldData.put("Stage", extraStage);//next stage is 1
+                oldData.put("Stage", extraStage);
 
                 inData.put("data", oldData);
                 String strData = inData.toString();
@@ -397,6 +531,120 @@ public class sendData {
             }
         }
 
+        if(stage == -2){
+            String data = "{\n" +
+                    "\t\"to\": \"" + this.requesterToken + "\",\n" +
+                    "\t\"data\":{\n" +
+                    "\t\t\"params\" : {\n" +
+                    "\t\t\t\t\"title\" : \"" + this.title + "\",\n" +
+                    "        \t\t\"range\" : \"" + this.requestRange + "\",\n" +
+                    "        \t\t\"Type\" : \"" + this.type + "\"\n" +
+                    "    \t\t\t}\n" +
+                    "\t\t\t\n" +
+                    "\t\t}\n" +
+                    "}";
+            try{
+                JSONObject inData = new JSONObject(data);
+                JSONObject oldData = inData.getJSONObject("data");
+                //put token in
+                JSONObject extraToken = new JSONObject();
+                extraToken.put("SenderToken", dataOwnderToken);
+                oldData.put("Token", extraToken);
+                //put stage in
+                JSONObject extraStage = new JSONObject();
+                extraStage.put("CurrStage", stage+1);
+                oldData.put("Stage", extraStage);
+                //put key
+                JSONObject extraKeyhole = new JSONObject();
+                JSONArray keyholeArray = new JSONArray();
+                for(int i=0; i<keyhole.size(); ++i){
+                    keyholeArray.put(keyhole.get(i));
+                }
+                extraKeyhole.put("keyhole", this.keyhole);
+                oldData.put("keyhole", extraKeyhole);//next stage is 1
+
+                inData.put("data", oldData);
+                String strData = inData.toString();
+                return strData;
+            }
+            catch (JSONException e){
+                return null;
+            }
+        }
+
+        if(stage == -1){
+            String data = "{\n" +
+                    "\t\"to\": \"" + this.dataOwnderToken + "\",\n" +
+                    "\t\"data\":{\n" +
+                    "\t\t\"params\" : {\n" +
+                    "\t\t\t\t\"title\" : \"" + this.title + "\",\n" +
+                    "        \t\t\"range\" : \"" + this.requestRange + "\",\n" +
+                    "        \t\t\"Type\" : \"" + this.type + "\"\n" +
+                    "    \t\t\t}\n" +
+                    "\t\t\t\n" +
+                    "\t\t}\n" +
+                    "}";
+            try{
+                JSONObject inData = new JSONObject(data);
+                JSONObject oldData = inData.getJSONObject("data");
+                //put token in
+                JSONObject extraToken = new JSONObject();
+                extraToken.put("SenderToken", requesterToken);
+                oldData.put("Token", extraToken);
+                //put stage in
+                JSONObject extraStage = new JSONObject();
+                extraStage.put("CurrStage", stage+2);//
+                oldData.put("Stage", extraStage);//next stage is 1
+                //put key
+                JSONObject extraKey = new JSONObject();
+                extraKey.put("key", this.key);
+                oldData.put("key", extraKey);//next stage is 1
+
+                inData.put("data", oldData);
+                String strData = inData.toString();
+                return strData;
+            }
+            catch (JSONException e){
+                Log.d("JSONException", e.toString());
+                return null;
+            }
+        }
+
+//        if(stage == 0){
+//            String data = "{\n" +
+//                    "\t\"to\": \"" + this.dataOwnderToken + "\",\n" +
+//                    "\t\"data\":{\n" +
+//                    "\t\t\"params\" : {\n" +
+//                    "\t\t\t\t\"title\" : \"" + this.title + "\",\n" +
+//                    "        \t\t\"range\" : \"" + this.message + "\",\n" +
+//                    "        \t\t\"Type\" : \"" + this.type + "\"\n" +
+//                    /*"        \t\t\"image\" : \"" + this.uri + "\"\n" +*/
+//                    "    \t\t\t}\n" +
+//                    "\t\t\t\n" +
+//                    "\t\t}\n" +
+//                    "}";
+//            try{
+//                JSONObject inData = new JSONObject(data);
+//                JSONObject oldData = inData.getJSONObject("data");
+//                //put token in
+//                JSONObject extraToken = new JSONObject();
+//                extraToken.put("SenderToken", requesterToken);
+//                oldData.put("Token", extraToken);
+//                //put stage in
+//                JSONObject extraStage = new JSONObject();
+//                extraStage.put("CurrStage", stage+1);
+//                oldData.put("Stage", extraStage);//next stage is 1
+//
+//                inData.put("data", oldData);
+//                String strData = inData.toString();
+//                return strData;
+//            }
+//            catch (JSONException e){
+//                Log.d("JSONException", e.toString());
+//                return null;
+//            }
+//        }
+
         if(stage == 1){
 
             String data = "{\n" +
@@ -404,8 +652,8 @@ public class sendData {
                     "\t\"data\":{\n" +
                     "\t\t\"params\" : {\n" +
                     "\t\t\t\t\"title\" : \"" + this.title + "\",\n" +
-                    "        \t\t\"range\" : \"" + this.requestRange + "\"\n" +
-                    /*"        \t\t\"description\" : \"" + this.message.toString() + "\"\n" +*/
+                    "        \t\t\"range\" : \"" + this.requestRange + "\",\n" +
+                    "        \t\t\"Type\" : \"" + this.type + "\"\n" +
                     /*"        \t\t\"image\" : \"" + this.uri + "\"\n" +*/
                     "    \t\t\t}\n" +
                     "\t\t\t\n" +
@@ -464,10 +712,13 @@ public class sendData {
                     JSONObject extraPoK = new JSONObject();
                     extraPoK.put("PoK", PoK);
                     oldData.put("PoK", extraPoK);
+                    //put PoK in
+                    JSONObject extraShowPoK = new JSONObject();
+                    extraShowPoK.put("ShowPoK", showPoK);
+                    oldData.put("ShowPoK", extraShowPoK);
 
                     inData.put("data", oldData);
                     String strData = inData.toString();
-                    Log.d("sysyem_check_stage1_send", strData);
                     return strData;
                 }
                 catch (JSONException e){

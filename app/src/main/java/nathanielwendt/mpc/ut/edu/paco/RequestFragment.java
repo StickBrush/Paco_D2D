@@ -7,10 +7,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
@@ -45,9 +47,11 @@ public class RequestFragment extends Fragment {
     private String title;
     private String message;
     private String data;
+    private String type;
     private UserDataAdapter mNearbyDevicesArrayAdapter;
     private RequestFragment.OnFragmentInteractionListener mListener;
-    MqttAndroidClient client;
+    private MqttAndroidClient client;
+    private Spinner request_type;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -59,12 +63,19 @@ public class RequestFragment extends Fragment {
         receiverToken = (EditText) root.findViewById(R.id.req_Receiver);
         btn_req_send = (Button) root.findViewById(R.id.btn_req_send);
         nearby_list_view = (ListView) root.findViewById(R.id.nearby_devices_list_view);
+        request_type = (Spinner)root.findViewById(R.id.request_type);
 
         client = ((MainActivity)getActivity()).getClient();
 
         //Button Switch
         mSwitchCompat = root.findViewById(R.id.req_switch);
         mSwitchCompat.setChecked(false);
+
+        //spinner
+        final String[] type = {"Restaurant", "Park"};
+        final ArrayAdapter<String> typeList = new ArrayAdapter<>(getActivity(),
+                android.R.layout.simple_spinner_dropdown_item,
+                type);request_type.setAdapter(typeList);
 
         //place SEND
         Bundle bundle=getArguments();
@@ -182,17 +193,18 @@ public class RequestFragment extends Fragment {
     }
 
     private String sendData(){
+        type = request_type.getSelectedItem().toString();
         SenderToken =((MainActivity)getActivity()).getTheCurrentClient();
         ReceiverToken = receiverToken.getText().toString();
         title = in_title.getText().toString();
         message = in_message.getText().toString();
         sendData data = new sendData();
-        data.setStage(0);
+        data.setType(type);
+        data.setStage(-3);
         data.setDataOwnderToken(ReceiverToken);
         data.setRequesterToken(SenderToken);
         data.setTitle(title);
         data.setMessage(message);
-
         return data.getSendData();
     }
 

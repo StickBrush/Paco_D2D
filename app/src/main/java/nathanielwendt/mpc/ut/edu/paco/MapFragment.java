@@ -33,6 +33,9 @@ import com.ut.mpc.utils.STRegion;
 import org.florescu.android.rangeseekbar.RangeSeekBar;
 
 import java.math.BigDecimal;
+import java.util.List;
+
+import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 /**
  * Created by nathanielwendt on 11/25/16.
@@ -109,6 +112,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         this.map = map;
         this.map.setOnMapLongClickListener(longClickListener);
         resetMapPos();
+
+        List<PlaceData> places = ((MainActivity)getActivity()).getFilter().getPlaces();
+        for(int i=0; i<places.size(); ++i){
+            STRegion region = places.get(i).getRegion();
+            STPoint point = region.getMins();
+            double x =point.getX();
+            double y =point.getY();
+            LatLng place = new LatLng(y, x);
+            map.addMarker(new MarkerOptions().position(place));
+        }
     }
 
     public void resetMapPos(){
@@ -122,6 +135,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             map.clear();
         }
         nextPlaceRegion = null;
+
+        //
+        List<PlaceData> places = ((MainActivity)getActivity()).getFilter().getPlaces();
+        for(int i=0; i<places.size(); ++i){
+            STRegion region = places.get(i).getRegion();
+            STPoint point = region.getMins();
+            double x =point.getX();
+            double y =point.getY();
+            LatLng place = new LatLng(y, x);
+            map.addMarker(new MarkerOptions().position(place));
+        }
     }
 
     // Note that this breaks if user is querying across the prime meridian because the sign of longitude changes
@@ -161,10 +185,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             long nowMS = System.currentTimeMillis()/1000;
             float MS = (float) (nowMS);
 
-            STPoint mins = new STPoint((float) (latLng.longitude - lonOffset), (float) (latLng.latitude - latOffset), MS);//
-            STPoint maxs = new STPoint((float) (latLng.longitude + lonOffset), (float) (latLng.latitude + latOffset), MS);//
-            //STPoint mins = new STPoint((float) (latLng.longitude - lonOffset), (float) (latLng.latitude - latOffset));
-            //STPoint maxs = new STPoint((float) (latLng.longitude + lonOffset), (float) (latLng.latitude + latOffset));
+//            STPoint mins = new STPoint((float) (latLng.longitude - lonOffset), (float) (latLng.latitude - latOffset), MS);//
+//            STPoint maxs = new STPoint((float) (latLng.longitude + lonOffset), (float) (latLng.latitude + latOffset), MS);//
+            STPoint mins = new STPoint((float) (latLng.longitude - lonOffset), (float) (latLng.latitude - latOffset));
+            STPoint maxs = new STPoint((float) (latLng.longitude + lonOffset), (float) (latLng.latitude + latOffset));
 
             nextPlaceRegion = new STRegion(mins, maxs);
             map.addCircle(new CircleOptions().center(latLng).radius(Constants.LOCATION_RADIUS * 1000).
@@ -243,13 +267,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 //            minMS = startOfDayMS + (minTimeProgress * 60 * 60 * 1000);
 //            maxMS = startOfDayMS + (maxTimeProgress * 60 * 60 * 1000);
 
-            //minMS = currMS - ((hour - minTimeProgress) * 60 * 60 * 1000);
-            //maxMS = currMS - ((hour - maxTimeProgress) * 60 * 60 * 1000);
-
-            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
-            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
-            //STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude);
-            //STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude);
+//            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
+//            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
+            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude);
+            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude);
             STRegion mapRegion = new STRegion(minPoint, maxPoint);
 
             double pok = mapListener.windowPoK(mapRegion);
@@ -296,10 +317,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             float minMS = nowMS + (60 * 60 * 1000 * minHourOffset); //range values should be negative, effectively subtracting
             float maxMS = nowMS + (60 * 60 * 1000 * maxHourOffset); //range values should be negative, effectively subtracting
 
-            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
-            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
-            //STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude);
-            //STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude);
+//            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude, minMS);
+//            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude, maxMS);
+            STPoint minPoint = new STPoint((float) southwest.longitude, (float) southwest.latitude);
+            STPoint maxPoint = new STPoint((float) northeast.longitude, (float) northeast.latitude);
             STRegion mapRegion = new STRegion(minPoint, maxPoint);
 
             request(mapRegion);

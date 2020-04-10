@@ -10,8 +10,8 @@
     <item android:id="@+id/action_show_places" android:icon="@drawable/ic_place_white_48dp"
         android:title="@string/show_places" app:showAsAction="ifRoom" />
 
-    <item android:id="@+id/action_send_places" android:icon="@android:drawable/ic_menu_send"
-        android:title="@string/btn_send" app:showAsAction="ifRoom" />
+<!--    <item android:id="@+id/action_send_places" android:icon="@android:drawable/ic_menu_send"-->
+<!--        android:title="@string/btn_send" app:showAsAction="ifRoom" />-->
 
     <item android:id="@+id/action_receive_places" android:icon="@android:drawable/stat_notify_chat"
         android:title="RECEIVE MESSAGE" app:showAsAction="ifRoom" />

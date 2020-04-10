@@ -27,13 +27,13 @@ public class Constants {
 
         //TODO: add SPACE-TEMPORAL Trim so nearby doesn't need to trim if they are insignificant points
         public static void updateConfig(STPoint refPoint){
-            if(SPATIAL_TYPE == SpatialType.GPS){
+//            if(SPATIAL_TYPE == SpatialType.GPS){
                 X_CUBE = GPSLib.longOffsetFromDistance(refPoint, PoK.SPACE_RADIUS);
                 Y_CUBE = GPSLib.latOffsetFromDistance(refPoint, PoK.SPACE_RADIUS);
-            } else {
-                X_CUBE = PoK.SPACE_RADIUS;
-                Y_CUBE = PoK.SPACE_RADIUS;
-            }
+//            } else {
+//                X_CUBE = PoK.SPACE_RADIUS;
+//                Y_CUBE = PoK.SPACE_RADIUS;
+//            }
             T_CUBE = PoK.TEMPORAL_RADIUS;
         }
         public static float X_CUBE, Y_CUBE, T_CUBE;

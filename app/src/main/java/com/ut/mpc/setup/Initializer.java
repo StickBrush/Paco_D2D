@@ -81,7 +81,7 @@ public class Initializer {
         return new Builder().refPoint(Constants.DEFAULT_REF_POINT)
                 .spatialType(Constants.SpatialType.Meters)
                 .trimThresh(10)
-                .temporalRadius(60 * 5).spaceRadius((float)0.05) // 5 minutes in seconds, 50 meters /////was 50
+                .temporalRadius(60 * 5).spaceRadius((float)0.05) // 5 minutes in seconds, 50 meters
                 .temporalWeight(1).spaceWeight(1).build();
     }
 

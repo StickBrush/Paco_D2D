@@ -164,7 +164,7 @@ public class LSTFilter {
         double totalGridCount = 0.0;
 
         STStorage cacheStore;
-        double windowVolume = window.getRegion().getNVolume();
+        double windowVolume = window.getRegion().getNVolume()/3600;
         double evalVolume = 0.0f;
         STRegion evalRegion = new STRegion(minBounds, maxBounds);
         if(this.kdCache){
@@ -192,10 +192,6 @@ public class LSTFilter {
         // Refactored to not include the "blank" cube optimization
         double totalWeight = 0.0;
         double regionWeight = 0.0;
-		BigDecimal BigminBounds = new BigDecimal(Float.toString(minBounds.getT()));
-		BigDecimal BigmaxBounds = new BigDecimal(Float.toString(maxBounds.getT()));
-		BigDecimal BigtGridGran = new BigDecimal(Float.toString(tGridGran));///gridFactor
-		BigDecimal BigtCenterOffset = new BigDecimal(Float.toString(tCenterOffset));
 
         int effCubeCount = 0;
         for(float x = minBounds.getX(); x < maxBounds.getX(); x = x + xGridGran){//devide ....
@@ -207,6 +203,7 @@ public class LSTFilter {
                     try {
                         STRegion miniRegion = GPSLib.getSpaceBoundQuick(centerOfRegion, boundValues, SPATIAL_TYPE);
                         List<STPoint> activePoints = cacheStore.range(miniRegion);//all the points in miniRegion
+						System.out.println(activePoints);
                         //List<STPoint> activePoints = structure.range(miniRegion);
                         regionWeight = this.getPointsPoK(centerOfRegion, activePoints);
                         effCubeCount++;
@@ -325,6 +322,7 @@ public class LSTFilter {
 			spatialCont =  (-1 * Math.min(spatialDist, PoK.SPACE_RADIUS));
 			temporalCont = (-1 * Math.min(temporalDist, PoK.TEMPORAL_RADIUS));
 			contribution = ((spatialCont + PoK.SPACE_WEIGHT) * (temporalCont + PoK.TEMPORAL_WEIGHT)) / (PoK.SPACE_WEIGHT * PoK.TEMPORAL_WEIGHT);
+			Log.d("checkPoK_centerOfRegion_contribution", Double.toString(contribution));
 			//contribution = ((spatialCont + PoK.SPACE_RADIUS)*PoK.SPACE_WEIGHT * (temporalCont + PoK.TEMPORAL_RADIUS)*PoK.TEMPORAL_WEIGHT) / (PoK.SPACE_RADIUS * PoK.TEMPORAL_RADIUS);
 			nearby.add(contribution);
 		}

@@ -149,11 +149,11 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
             prefix = " AND ";
         }
 
-        if(mins.hasT() && maxs.hasT()){
-            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
-                    " AND maxT <= " + String.format("%f", maxs.getT());
-            prefix = " AND ";
-        }
+//        if(mins.hasT() && maxs.hasT()){
+//            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
+//                    " AND maxT <= " + String.format("%f", maxs.getT());
+//            prefix = " AND ";
+//        }
 
         Cursor cur = db.rawQuery(query, null);
 
@@ -435,11 +435,11 @@ public class SQLiteRTree extends SQLiteOpenHelper implements STStorage {
             prefix = " AND ";
         }
 
-        if(mins.hasT() && maxs.hasT()){
-            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
-                    " AND maxT <= " + String.format("%f", maxs.getT());
-            prefix = " AND ";
-        }
+//        if(mins.hasT() && maxs.hasT()){
+//            query += prefix + " minT >= " + String.format("%f", mins.getT()) +
+//                    " AND maxT <= " + String.format("%f", maxs.getT());
+//            prefix = " AND ";
+//        }
 
         Cursor cur = db.rawQuery(query, null);
 

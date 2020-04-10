@@ -88,6 +88,7 @@ import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.AccessProfile;
 import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 import nathanielwendt.mpc.ut.edu.paco.Data.SettingData;
 import nathanielwendt.mpc.ut.edu.paco.Data.UserData;
+import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.PrivacySetting;
 import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.paco;
 import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.sendData;
 import nathanielwendt.mpc.ut.edu.paco.utils.SQLiteRTree;
@@ -140,7 +141,8 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
     ArrayList<String> isSubTopic = new ArrayList<String>();
 
     private SettingData setData = new SettingData();
-    private AccessProfile accessProfile = new AccessProfile();////
+    private AccessProfile accessProfile = new AccessProfile();//
+    private PrivacySetting privacySetting = new PrivacySetting();//
 
     //Location
     Location location;
@@ -199,16 +201,16 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
         mPaco = new paco(getBaseContext(), this, filter);//
 
-        io.moquette.server.Server server = new io.moquette.server.Server();
-        try {
-            MemoryConfig memoryConfig = new MemoryConfig(new Properties());
-            memoryConfig.setProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME, Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator + BrokerConstants.DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME);
-            server.startServer(memoryConfig);
-            // server.startServer();//is not working due to DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME;
-            //Log.d(TAG,"Server Started");
-        }
-        catch (IOException e) { e.printStackTrace(); }
-        catch (Exception e){ e.printStackTrace(); }
+//        io.moquette.server.Server server = new io.moquette.server.Server();
+//        try {
+//            MemoryConfig memoryConfig = new MemoryConfig(new Properties());
+//            memoryConfig.setProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME, Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator + BrokerConstants.DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME);
+//            //server.startServer(memoryConfig);
+//            // server.startServer();//is not working due to DEFAULT_MOQUETTE_STORE_MAP_DB_FILENAME;
+//            //Log.d(TAG,"Server Started");
+//        }
+//        catch (IOException e) { e.printStackTrace(); }
+//        catch (Exception e){ e.printStackTrace(); }
         //get Firebase Token
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
@@ -285,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
                                 //HaldleMQTTMessage(message, currentToken);
                                 DateFormat df = new SimpleDateFormat("MMM d, yyyy HH:mm:ss");
                                 String ts = df.format(new Date());
-                                mPaco.respondTOMQTTRequest(message, ts, getAccessProfile());
+                                mPaco.respondTOMQTTRequest(message, ts, getAccessProfile(), privacySetting);
 
                             }
 
@@ -309,9 +311,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
         //SharedPreferences sharedpreferences = getSharedPreferences("Places", Context.MODE_PRIVATE);
         //sharedpreferences.edit().clear().commit();
-        //SQLiteRTree rtree = new SQLiteRTree(this, "RTreeMain");
-        //filter = new LSTFilter(rtree, initializer);//
-        //filter.setRefPoint(new STPoint((float) lastLoc.longitude, (float) lastLoc.latitude, 0));
 
         Dexter.initialize(this);
 
@@ -339,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         public void onReceive(Context context, Intent intent) {
             DateFormat df = new SimpleDateFormat("MMM d, yyyy HH:mm:ss");
             String ts = df.format(new Date());
-            mPaco.respondTORequest(intent, ts, accessProfile);//
+            mPaco.respondTORequest(intent, ts, accessProfile, privacySetting);//
         }
     };
 
@@ -375,7 +374,7 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         popupWindow.showAtLocation(view, Gravity.CENTER_HORIZONTAL, 0, 0);
     }
 
-    public void PopupWindowDeny(String PoK, final sendData SendData) {
+    public void PopupWindowDeny(String PoK, final sendData SendData, boolean showPoK) {
         View view = LayoutInflater.from(MainActivity.this)
                 .inflate(R.layout.pop_window_deny, null);
         popupWindow = new PopupWindow(view);
@@ -383,7 +382,9 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 
             TextView PoKText = (TextView) view.findViewById(R.id.PoK_text);
-            PoKText.setText("PoK is " + PoK);
+            if(showPoK){
+                PoKText.setText("PoK is " + PoK);
+            }
 
             Button btn_OK = (Button) view.findViewById(R.id.OK);
             btn_OK.setOnClickListener(new View.OnClickListener() {
@@ -526,6 +527,7 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
     public UserData getUser() {return user;}
     public DatabaseReference getDatabaseReference() {return mDatabaseReference;}
     public FirebaseDatabase getDatabase(){return mDatabase;}
+    public PrivacySetting getPrivacySetting(){return privacySetting;}
 
     private class LastKnownLocationReceiver extends BroadcastReceiver {
         @Override

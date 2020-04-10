@@ -1,6 +1,5 @@
 package nathanielwendt.mpc.ut.edu.paco.fire_MQTT;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -19,6 +18,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
 import com.ut.mpc.utils.GPSLib;
 import com.ut.mpc.utils.LSTFilter;
 import com.ut.mpc.utils.LSTFilterException;
@@ -28,11 +30,13 @@ import com.ut.mpc.utils.STRegion;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +100,7 @@ public class paco {
         }
     }
 
-    public void respondTORequest(Intent intent, String ts, AccessProfile accessProfile) {
+    public void respondTORequest(Intent intent, String ts, AccessProfile accessProfile, PrivacySetting privacySetting) {
         try {
             String message = intent.getStringExtra("FirebaseData");
             JSONObject jsonData = new JSONObject(message);
@@ -108,7 +112,61 @@ public class paco {
             SendData.setStage(Integer.parseInt(Stage));
             SendData.setMessage(message);
 
-            if(SendData.getStage() == 1){
+            //if(Resource == "restaurant"){
+            if(SendData.getStage() == -2){
+                JSONObject param = jsonData.getJSONObject("params");
+                String type = param.getString("Type");
+                ArrayList<String> keyhole = getKeyhole(type, privacySetting);//sendback keyhole
+                SendData.setKeyhole(keyhole);
+                SendData.setMessage(message);
+                SendData.setType(type.toString());
+                SendData.setSenderToken(clientId);
+                SendData.setDataOwnderToken(clientId);
+                SendData.HandleFireData();
+                SEND(SendData.getSendData());
+                Log.d("type,", SendData.getSendData());
+            }
+
+            else if(SendData.getStage() == -1){
+                Log.d("type,", message);
+                JSONObject data;
+                JSONObject param = jsonData.getJSONObject("params");
+                String type = param.getString("Type");
+                JSONObject json_Keyhole = jsonData.getJSONObject("keyhole");
+                Log.d("type", "A"+json_Keyhole.getString("keyhole"));
+                if(json_Keyhole.length()>1) {
+                    JSONArray array_Keyhole = json_Keyhole.getJSONArray("keyhole");
+                    data = gatherKeyMessage(array_Keyhole);
+                    SendData.setKey(data);
+                    Log.d("type_key", "A"+data);
+                }
+                SendData.setType(type);
+                SendData.setMessage(message);
+                SendData.setSenderToken(clientId);
+                SendData.setRequesterToken(clientId);
+                SendData.HandleFireData();
+                SEND(SendData.getSendData());
+            }
+
+//            else if(SendData.getStage() == 0){
+//                Log.d("type,", message);
+//                try{
+//                    JSONObject param = jsonData.getJSONObject("params");
+//                    String type = param.getString("Type");
+//                    if(Boolean.parseBoolean(checkKeyMessage(type, jsonData, privacySetting, accessProfile))){
+//                        SendData.setType(type);
+//                        SendData.setMessage(message);
+//                        SendData.setSenderToken(clientId);
+//                        SendData.setDataOwnderToken(clientId);
+//                        SendData.HandleFireData();
+//                        SEND(SendData.getSendData());
+//                    } else{}
+//                }catch (JsonIOException e){
+//
+//                }
+//            }
+
+            else if(SendData.getStage() == 1){
                 String not1 =  SendData.HandleFireData().get(0);
                 String not2 =  SendData.HandleFireData().get(1);
                 String[] not = {not1, not2};
@@ -121,26 +179,49 @@ public class paco {
                 STRegion region = STRegion.fromString(SendData.getRequestRange());
                 Double DoublePoK = lstFilter.windowPoK(region);//
                 String PoK = String.format("%.2f", DoublePoK * 100.0) + "%";
-                Log.d("checkPoK", Double.toString(DoublePoK));
                 Log.d("checkPoK", PoK);
                 SendData.setPoK(PoK);
 
-                //check Permission
-                try {
-                    if(checkRequestPermission(SendData.getRequestRange(), DoublePoK, accessProfile)){
-                        SendData.setPermission(true);
-                        SendData.setTitle("Request Places");
-                        SEND(SendData.getSendData());
-                    }
-                    else{
-                        SendData.setPermission(false);
-                        SendData.setMessage("");
-                        SEND(SendData.getSendData());
-                    }
-                } catch (LSTFilterException e){
-                    Log.d("LSTFilterException", e.toString());
-                }
+                try{
+                    JSONObject param = jsonData.getJSONObject("params");
+                    String type = param.getString("Type");
+                    if(Boolean.parseBoolean(checkKeyMessage(type, jsonData, privacySetting, accessProfile))){
+                        //check AccessProfle
+                        try {
+                            if(checkRequestPermission(SendData.getRequestRange(), DoublePoK, accessProfile)){
+                                if(accessProfile.getAccessLevel() == 1){
+                                    SendData.setPermission(true);
+                                    SendData.setShowPoK(true);
+                                    SendData.setTitle("Request Places");
+                                    SEND(SendData.getSendData());
+                                } else{
+                                    SendData.setPermission(false);
+                                    SendData.setShowPoK(true);
+                                    SendData.setTitle("Request Places");
+                                    SEND(SendData.getSendData());
+                                }
+                            }
+                            else{
+                                SendData.setPermission(false);
+                                SendData.setShowPoK(false);
+                                SendData.setMessage("");
+                                SEND(SendData.getSendData());
+                            }
+                        } catch (LSTFilterException e){
+                            Log.d("LSTFilterException", e.toString());
+                        }
 
+                        SendData.setType(type);
+                        SendData.setMessage(message);
+                        SendData.setSenderToken(clientId);
+                        SendData.setDataOwnderToken(clientId);
+                        SendData.HandleFireData();
+                        SEND(SendData.getSendData());
+
+                    } else{}
+                }catch (JsonIOException e){
+
+                }
             }
 
             if(SendData.getStage() == 2){
@@ -161,9 +242,10 @@ public class paco {
                     SendData.HandleFireData();
                     activity.PopupWindowAccept(SendData.getPoK(), SendData, "Fire");
                 } else{
+                    JSONObject json_showPok = jsonData.getJSONObject("ShowPoK");
+                    String showPoK = json_showPok.get("ShowPoK").toString();
                     SendData.HandleFireData();
-                    activity.PopupWindowDeny(SendData.getPoK(), SendData);
-                    //Toast.makeText(MainActivity.this,"Permission Denied", Toast.LENGTH_LONG).show();
+                    activity.PopupWindowDeny(SendData.getPoK(), SendData, Boolean.parseBoolean(showPoK));
                 }
             }
 
@@ -192,9 +274,8 @@ public class paco {
         }
     }
 
-    public void respondTOMQTTRequest(String inMessage, String ts, AccessProfile accessProfile) {
+    public void respondTOMQTTRequest(String inMessage, String ts, AccessProfile accessProfile, PrivacySetting privacySetting) {
         try {
-            //String message = intent.getStringExtra("FirebaseData");
             JSONObject jsonData = new JSONObject(inMessage);
             JSONObject json_data = jsonData.getJSONObject("data");
             JSONObject json_stage = json_data .getJSONObject("Stage");
@@ -207,39 +288,94 @@ public class paco {
             SendData.setStage(Integer.parseInt(Stage));
             SendData.setMessage(json_data.toString());
 
-            if (SendData.getStage() == 1) {
-                    if(!clientId.equals(Token)) {//
-                        String not1 = SendData.HandleMQTTData().get(0);
-                        String not2 = SendData.HandleMQTTData().get(1);
-                        String[] not = {not1, not2};
-                        updateNotificationList(not);
+            //if(Resource == "restaurant"){
+            if(SendData.getStage() == -2){
+                if(!clientId.equals(Token)) {
+                    JSONObject json_param = json_data.getJSONObject("params");
+                    String type = json_param.getString("Type");
 
-                        SendData.setSenderToken(getClientId());
-                        SendData.setDataOwnderToken(getClientId());
+                    ArrayList<String> keyhole = getKeyhole(type, privacySetting);//sendback keyhole
+                    SendData.setKeyhole(keyhole);
+                    SendData.setMessage(inMessage);
+                    SendData.setType(type);
+                    SendData.setSenderToken(clientId);
+                    SendData.setDataOwnderToken(clientId);
+                    SendData.HandleMQTTData();
+                    sendMQTT(SendData.getSendData());
+                }
+            }
 
-                        //Calculate PoK
-                        STRegion region = STRegion.fromString(SendData.getRequestRange());
-                        Double DoublePoK = lstFilter.windowPoK(region);//
-                        String PoK = String.format("%.2f", DoublePoK * 100.0) + "%";
-                        Log.d("checkPoK", PoK);
-                        SendData.setPoK(PoK);
+            else if(SendData.getStage() == -1){
+                if(!clientId.equals(Token)) {
+                    JSONObject data;
+                    JSONObject json_param = json_data.getJSONObject("params");
+                    String type = json_param.getString("Type");
+                    JSONObject json_Keyhole = json_data.getJSONObject("keyhole");
+                    if(json_Keyhole.length()>1) {
+                        JSONArray array_Keyhole = json_Keyhole.getJSONArray("keyhole");
+                        data = gatherKeyMessage(array_Keyhole);
+                        SendData.setKey(data);
+                    }
+                    SendData.setType(type);
+                    SendData.setMessage(inMessage);
+                    SendData.setSenderToken(clientId);
+                    SendData.setRequesterToken(clientId);
+                    SendData.HandleMQTTData();
+                    sendMQTT(SendData.getSendData());
+                    Log.d("type_key", "A"+SendData.getSendData());
+                }
+            }
 
-                        //check Permission
-                        try {
-                            if (checkRequestPermission(SendData.getRequestRange(), DoublePoK, accessProfile)) {
-                                SendData.setPermission(true);
-                                SendData.setTitle("Request Places");
-                                sendMQTT(SendData.getSendData());
-                            } else {
-                                SendData.setPermission(false);
-                                SendData.setMessage("");
-                                sendMQTT(SendData.getSendData());//
-                            }
-                        } catch (LSTFilterException e) {
-                            Log.d("LSTFilterException", e.toString());
+                else if (SendData.getStage() == 1) {
+                        if(!clientId.equals(Token)) {//
+                            String not1 = SendData.HandleMQTTData().get(0);
+                            String not2 = SendData.HandleMQTTData().get(1);
+                            String[] not = {not1, not2};
+                            updateNotificationList(not);
+
+                            SendData.setSenderToken(getClientId());
+                            SendData.setDataOwnderToken(getClientId());
+
+                            //Calculate PoK
+                            STRegion region = STRegion.fromString(SendData.getRequestRange());
+                            Double DoublePoK = lstFilter.windowPoK(region);//
+                            String PoK = String.format("%.2f", DoublePoK * 100.0) + "%";
+                            Log.d("checkPoK", PoK);
+                            SendData.setPoK(PoK);
+
+                        try{
+                            JSONObject json_param = json_data.getJSONObject("params");
+                            String type = json_param.getString("Type");
+                            if(Boolean.parseBoolean(checkKeyMessage(type, json_data, privacySetting, accessProfile))) {
+                                //check AccessProfle
+                                try {
+                                    if (checkRequestPermission(SendData.getRequestRange(), DoublePoK, accessProfile)) {
+                                        if(accessProfile.getAccessLevel() == 1){
+                                            SendData.setPermission(true);
+                                            SendData.setShowPoK(true);
+                                            SendData.setTitle("Request Places");
+                                            sendMQTT(SendData.getSendData());
+                                        } else{
+                                            SendData.setPermission(false);
+                                            SendData.setShowPoK(true);
+                                            SendData.setTitle("Request Places");
+                                            sendMQTT(SendData.getSendData());
+                                        }
+                                    } else {
+                                        SendData.setPermission(false);
+                                        SendData.setShowPoK(false);
+                                        SendData.setMessage("");
+                                        sendMQTT(SendData.getSendData());//
+                                    }
+                                } catch (LSTFilterException e) {
+                                    Log.d("LSTFilterException", e.toString());
+                                }
+                            } else{}
+                        }catch (JSONException e){
                         }
                     }
                 }
+
                 else if(SendData.getStage() == 2 && !clientId.equals(Token) ){
                     JSONObject json_permission = json_data.getJSONObject("Permission");
                     String permission = json_permission.get("Permission").toString();
@@ -258,8 +394,10 @@ public class paco {
                         SendData.HandleMQTTData();
                         activity.PopupWindowAccept(SendData.getPoK(), SendData, "MQTT");
                     } else{
+                        JSONObject json_showPok = json_data.getJSONObject("ShowPoK");
+                        String showPoK  = json_showPok.get("ShowPoK").toString();
                         SendData.HandleMQTTData();
-                        activity.PopupWindowDeny(SendData.getPoK(), SendData);
+                        activity.PopupWindowDeny(SendData.getPoK(), SendData, Boolean.parseBoolean(showPoK));
                     }
                 }
 
@@ -360,6 +498,93 @@ public class paco {
         } catch (UnsupportedEncodingException | MqttException e) {
             e.printStackTrace();
             Log.d("Send", "Failed to Send");
+        }
+    }
+
+    public ArrayList<String> getKeyhole(String type, PrivacySetting privacySetting){
+            int level = privacySetting.getLevel(type);
+            return privacySetting.getRequireType(level);
+    }
+
+    public JSONObject gatherKeyMessage(JSONArray jsonArray){
+        try {
+            JSONObject data = new JSONObject();
+            for(int i=0;i<jsonArray.length(); ++i) {
+                if(jsonArray.getString(i) == "location"){
+                    data.put("location", activity.getCurrentLocation());
+                } else if(jsonArray.getString(i) == "identity"){
+                    data.put("identity", activity.getClient());
+                }
+            }
+            return data;
+        } catch (JSONException e) {
+            Log.e("JsonException", e.toString());
+            return null;
+        }
+    }
+
+    public String checkKeyMessage(String type, JSONObject jsonData, PrivacySetting privacySetting, AccessProfile accessProfile){
+        try {
+            boolean bool1 = true,
+                    bool2 = true;
+            String location = null;
+            String identity = null;
+            JSONObject json_key;
+
+            if(jsonData.getString("key") != null){
+                json_key = jsonData.getJSONObject("key");
+
+                //String json_type = jsonData.getJSONObject("type").toString();
+                int level = privacySetting.getLevel(type);
+                ArrayList<String> needKey = privacySetting.getRequireType(level);
+                for(int i=0; i<needKey.size(); ++i){
+                    if(needKey.get(i)=="location"){
+                        location = json_key.getString("location");
+                    }
+                    else{
+                        identity = json_key.getString("identity");////
+                    }
+                }
+            }
+            if(location!=null){
+                if(CheckNearby(location)){bool1=true;}
+                else{bool1=false;}
+            }else{
+                bool1=true;
+            }
+            if(identity!=null){
+//                if(CheckNearby(location)){bool1=true;}
+//                else{bool1=false;}
+                bool2 = true;
+            } else {
+                bool2 = true;
+            }
+
+            return Boolean.toString(bool1&bool2);
+
+        }catch (JSONException e){
+            Log.d("JSONException", e.toString());
+            return null;
+        }
+    }
+
+    private boolean CheckNearby(String OtherLocation){
+
+        String curLocation = activity.getCurrentLocation();
+        curLocation = curLocation.replaceAll("[()]","");
+        String[] curLocSplits = curLocation.split(", ");
+
+        OtherLocation = OtherLocation.replaceAll("[()]","");
+        String[] otherLocationSplits = OtherLocation.split(",");
+
+        if(!curLocation.equals(OtherLocation)){
+            if( Math.pow( (Double.valueOf(curLocSplits[0])-Double.valueOf(otherLocationSplits[0])), 2) + Math.pow( (Double.valueOf(curLocSplits[1])-Double.valueOf(otherLocationSplits[1])), 2) <= Math.pow(100, 2)){
+                return true;
+            } else{
+                return false;
+            }
+        } else{
+            return false;
         }
     }
 

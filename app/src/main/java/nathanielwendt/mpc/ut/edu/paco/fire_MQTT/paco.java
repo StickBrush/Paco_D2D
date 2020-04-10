@@ -124,21 +124,17 @@ public class paco {
                 SendData.setDataOwnderToken(clientId);
                 SendData.HandleFireData();
                 SEND(SendData.getSendData());
-                Log.d("type,", SendData.getSendData());
             }
 
             else if(SendData.getStage() == -1){
-                Log.d("type,", message);
                 JSONObject data;
                 JSONObject param = jsonData.getJSONObject("params");
                 String type = param.getString("Type");
                 JSONObject json_Keyhole = jsonData.getJSONObject("keyhole");
-                Log.d("type", "A"+json_Keyhole.getString("keyhole"));
                 if(json_Keyhole.length()>1) {
                     JSONArray array_Keyhole = json_Keyhole.getJSONArray("keyhole");
                     data = gatherKeyMessage(array_Keyhole);
                     SendData.setKey(data);
-                    Log.d("type_key", "A"+data);
                 }
                 SendData.setType(type);
                 SendData.setMessage(message);
@@ -216,7 +212,7 @@ public class paco {
                         SendData.setSenderToken(clientId);
                         SendData.setDataOwnderToken(clientId);
                         SendData.HandleFireData();
-                        SEND(SendData.getSendData());
+                        //SEND(SendData.getSendData());
 
                     } else{}
                 }catch (JsonIOException e){
@@ -322,7 +318,6 @@ public class paco {
                     SendData.setRequesterToken(clientId);
                     SendData.HandleMQTTData();
                     sendMQTT(SendData.getSendData());
-                    Log.d("type_key", "A"+SendData.getSendData());
                 }
             }
 

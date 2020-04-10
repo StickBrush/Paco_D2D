@@ -348,6 +348,7 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         popupWindow = new PopupWindow(view);
         popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        Log.d("popup", "show");
 
         TextView PoKText = (TextView) view.findViewById(R.id.PoK_text);
         PoKText.setText("PoK is " + PoK);

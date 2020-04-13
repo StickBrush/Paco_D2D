@@ -1,16 +1,11 @@
 package com.ut.mpc.paco;
 
-import com.ut.mpc.utils.GPSLib;
 import com.ut.mpc.utils.LSTFilter;
-import com.ut.mpc.utils.LSTFilterException;
 import com.ut.mpc.utils.QueryWindow;
 import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 
 import java.util.List;
-
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.AccessProfile;
-import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
 
 /**
  * Created by nathanielwendt on 10/13/16.

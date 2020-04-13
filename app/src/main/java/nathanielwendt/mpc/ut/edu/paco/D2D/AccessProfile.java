@@ -1,4 +1,4 @@
-package nathanielwendt.mpc.ut.edu.paco.fire_MQTT;
+package nathanielwendt.mpc.ut.edu.paco.D2D;
 
 import com.ut.mpc.setup.Constants;
 

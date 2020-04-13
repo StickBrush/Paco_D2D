@@ -52,12 +52,21 @@
         android:layout_marginTop="20dp"
         android:background="#1E90FF"/>
 
+    <TextView
+        android:id="@+id/levelSetting"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_below="@+id/access_level"
+        android:text="Setting Level of Topics"
+        android:textSize="20dp"/>
+
     <Spinner
         android:id="@+id/key_type"
         android:layout_width="275dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/access_level"
-        android:layout_marginTop="50dp"
+        android:layout_below="@+id/levelSetting"
+        android:layout_marginTop="20dp"
         android:hint="Data Type"/>
 
     <Spinner
@@ -65,8 +74,7 @@
         android:layout_width="275dp"
         android:layout_height="wrap_content"
         android:layout_below="@+id/key_type"
-        android:layout_marginTop="20dp"
-        android:text="[Select a Key Level]"/>
+        android:layout_marginTop="20dp"/>
 
 
     <Button
@@ -79,12 +87,21 @@
         android:layout_marginTop="50dp"
         android:background="#1E90FF"/>
 
+    <TextView
+        android:id="@+id/set"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_below="@+id/key_level"
+        android:text="Setting Permission of Levels"
+        android:textSize="20dp"/>
+
     <Spinner
         android:id="@+id/config_key_Level"
         android:layout_width="275dp"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/key_level"
-        android:layout_marginTop="50dp"
+        android:layout_below="@+id/set"
+        android:layout_marginTop="20dp"
         android:text="[Select a Key Level]"/>
 
     <Spinner

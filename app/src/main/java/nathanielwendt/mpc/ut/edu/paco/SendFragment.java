@@ -41,7 +41,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.sendData;
+import nathanielwendt.mpc.ut.edu.paco.D2D.sendData;
 
 
 public class SendFragment extends Fragment {
@@ -281,7 +281,7 @@ public class SendFragment extends Fragment {
 
         //share places
         sendData data = new sendData();
-        data.setStage(0);
+        data.setStage(-3);
         data.setDataOwnderToken(ReceiverToken);
         data.setRequesterToken(SenderToken);
         data.setTitle(title);

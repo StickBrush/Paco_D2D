@@ -1,15 +1,12 @@
-package nathanielwendt.mpc.ut.edu.paco.fire_MQTT;
+package nathanielwendt.mpc.ut.edu.paco.D2D;
 
 import android.util.Log;
-
-import com.google.gson.JsonArray;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
@@ -560,7 +557,7 @@ public class sendData {
                 for(int i=0; i<keyhole.size(); ++i){
                     keyholeArray.put(keyhole.get(i));
                 }
-                extraKeyhole.put("keyhole", this.keyhole);
+                extraKeyhole.put("keyhole", keyholeArray);
                 oldData.put("keyhole", extraKeyhole);//next stage is 1
 
                 inData.put("data", oldData);

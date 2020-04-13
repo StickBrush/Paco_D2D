@@ -164,7 +164,7 @@ public class LSTFilter {
         double totalGridCount = 0.0;
 
         STStorage cacheStore;
-        double windowVolume = window.getRegion().getNVolume()/3600;
+        double windowVolume = window.getRegion().getNVolume();
         double evalVolume = 0.0f;
         STRegion evalRegion = new STRegion(minBounds, maxBounds);
         if(this.kdCache){

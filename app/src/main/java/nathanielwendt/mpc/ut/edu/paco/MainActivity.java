@@ -7,21 +7,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -32,9 +22,6 @@ import androidx.appcompat.widget.Toolbar;
 
 import androidx.preference.PreferenceManager;
 
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -56,10 +43,8 @@ import com.karumi.dexter.listener.PermissionDeniedResponse;
 import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
-import com.ut.mpc.paco.Paco;
 import com.ut.mpc.setup.Initializer;
 import com.ut.mpc.utils.LSTFilter;
-import com.ut.mpc.utils.LSTFilterException;
 import com.ut.mpc.utils.STPoint;
 import com.ut.mpc.utils.STRegion;
 
@@ -68,31 +53,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
-import io.moquette.BrokerConstants;
-import io.moquette.server.config.MemoryConfig;
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.AccessProfile;
-import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
+import nathanielwendt.mpc.ut.edu.paco.D2D.AccessProfile;
 import nathanielwendt.mpc.ut.edu.paco.Data.SettingData;
 import nathanielwendt.mpc.ut.edu.paco.Data.UserData;
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.PrivacySetting;
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.paco;
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.sendData;
+import nathanielwendt.mpc.ut.edu.paco.D2D.PrivacySetting;
+import nathanielwendt.mpc.ut.edu.paco.D2D.paco;
+import nathanielwendt.mpc.ut.edu.paco.D2D.sendData;
 import nathanielwendt.mpc.ut.edu.paco.utils.SQLiteRTree;
-import nathanielwendt.mpc.ut.edu.paco.utils.notificationStore;
 
 import static com.ut.mpc.setup.Initializer.pedDefaults;
 
@@ -119,7 +93,7 @@ import com.google.firebase.iid.InstanceIdResult;
 //import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.paco;
 
 public class MainActivity extends AppCompatActivity implements PlacesFragment.OnFragmentInteractionListener, NotificationsFragment.OnFragmentInteractionListener,
-        MapFragment.MapFragmentListener, CreatePlaceFragment.CreatePlaceFragmentDoneListener {
+        MapFragment.MapFragmentListener, CreatePlaceFragment.CreatePlaceFragmentDoneListener, FriendsFragment.OnFragmentInteractionListener {
 
     private ViewGroup viewGroup;
     private static final int LOCATION_PERMISSION = 1;
@@ -284,11 +258,9 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
 
                                 String message = new String(MQTTmessage.getPayload());
 
-                                //HaldleMQTTMessage(message, currentToken);
                                 DateFormat df = new SimpleDateFormat("MMM d, yyyy HH:mm:ss");
                                 String ts = df.format(new Date());
                                 mPaco.respondTOMQTTRequest(message, ts, getAccessProfile(), privacySetting);
-
                             }
 
                             @Override
@@ -348,7 +320,6 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         popupWindow = new PopupWindow(view);
         popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
-        Log.d("popup", "show");
 
         TextView PoKText = (TextView) view.findViewById(R.id.PoK_text);
         PoKText.setText("PoK is " + PoK);
@@ -618,6 +589,10 @@ public class MainActivity extends AppCompatActivity implements PlacesFragment.On
         } else if(id == R.id.action_setting_privacy) {
             tag = "SettingFragment";
             fHelper.show(tag, new SettingFragment());
+            return true;
+        } else if(id == R.id.action_show_friedns){
+            tag = "FriednsFragment";
+            fHelper.show(tag, new FriendsFragment());
             return true;
         }
 

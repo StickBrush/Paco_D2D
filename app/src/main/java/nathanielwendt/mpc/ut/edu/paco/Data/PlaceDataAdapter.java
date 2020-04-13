@@ -33,7 +33,6 @@ public class PlaceDataAdapter extends ArrayAdapter<PlaceData> {
     private final List<PlaceData> places;
     private PlacesFragment.OnFragmentInteractionListener mListener;
 
-    private FragmentHelper fHelper;
     private Bitmap myBitmap;
 
     @Override

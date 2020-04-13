@@ -1,8 +1,6 @@
-package nathanielwendt.mpc.ut.edu.paco.fire_MQTT;
+package nathanielwendt.mpc.ut.edu.paco.D2D;
 
-import android.widget.Spinner;
-
-import com.ut.mpc.setup.Constants;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -22,8 +20,8 @@ public class PrivacySetting {
 
 
     public int getLevel(String requestType){
-        if(requestType == "Restaurant"){return Restaurant.getKeyLevel();}
-        else if(requestType == "Park"){return Park.getKeyLevel();}
+        if(requestType.equals("Restaurant")){return Restaurant.getKeyLevel();}
+        else if(requestType.equals("Park")){return Park.getKeyLevel();}
         else{return 1;}
     }
 
@@ -41,10 +39,13 @@ public class PrivacySetting {
     }
 
     public void updateProfile(int keyLevel, String Type){
-        if(Type == "Restaurant"){
+        Log.d("check_Location", Type);
+        Log.d("check_Location", Integer.toString(keyLevel));
+
+        if(Type.equals("Restaurant")){
             Restaurant.setKeyLevel(keyLevel);
         }
-        else if(Type == "Park"){
+        else if(Type.equals("Park")){
             Park.setKeyLevel(keyLevel);
         }
     }

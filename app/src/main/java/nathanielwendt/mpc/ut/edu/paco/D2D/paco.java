@@ -1,4 +1,4 @@
-package nathanielwendt.mpc.ut.edu.paco.fire_MQTT;
+package nathanielwendt.mpc.ut.edu.paco.D2D;
 
 import android.content.Context;
 import android.content.Intent;
@@ -18,9 +18,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonIOException;
-import com.google.gson.JsonObject;
 import com.ut.mpc.utils.GPSLib;
 import com.ut.mpc.utils.LSTFilter;
 import com.ut.mpc.utils.LSTFilterException;
@@ -42,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 
 import nathanielwendt.mpc.ut.edu.paco.Data.PlaceData;
-import nathanielwendt.mpc.ut.edu.paco.FragmentHelper;
 import nathanielwendt.mpc.ut.edu.paco.MainActivity;
 import nathanielwendt.mpc.ut.edu.paco.NotificationsFragment;
 import nathanielwendt.mpc.ut.edu.paco.PlacesFragment;
@@ -100,7 +97,7 @@ public class paco {
         }
     }
 
-    public void respondTORequest(Intent intent, String ts, AccessProfile accessProfile, PrivacySetting privacySetting) {
+    public void respondTORequest(Intent intent, String ts, AccessProfile accessProfile, PrivacySetting privacySetting) {//Firebase
         try {
             String message = intent.getStringExtra("FirebaseData");
             JSONObject jsonData = new JSONObject(message);
@@ -131,7 +128,7 @@ public class paco {
                 JSONObject param = jsonData.getJSONObject("params");
                 String type = param.getString("Type");
                 JSONObject json_Keyhole = jsonData.getJSONObject("keyhole");
-                if(json_Keyhole.length()>1) {
+                if(!json_Keyhole.get("keyhole").toString().equals("[]")) {
                     JSONArray array_Keyhole = json_Keyhole.getJSONArray("keyhole");
                     data = gatherKeyMessage(array_Keyhole);
                     SendData.setKey(data);
@@ -214,7 +211,12 @@ public class paco {
                         SendData.HandleFireData();
                         //SEND(SendData.getSendData());
 
-                    } else{}
+                    } else{
+                        SendData.setPermission(false);
+                        SendData.setShowPoK(false);
+                        SendData.setMessage("");
+                        SEND(SendData.getSendData());
+                    }
                 }catch (JsonIOException e){
 
                 }
@@ -291,6 +293,7 @@ public class paco {
                     String type = json_param.getString("Type");
 
                     ArrayList<String> keyhole = getKeyhole(type, privacySetting);//sendback keyhole
+                    System.out.println(keyhole);
                     SendData.setKeyhole(keyhole);
                     SendData.setMessage(inMessage);
                     SendData.setType(type);
@@ -307,7 +310,7 @@ public class paco {
                     JSONObject json_param = json_data.getJSONObject("params");
                     String type = json_param.getString("Type");
                     JSONObject json_Keyhole = json_data.getJSONObject("keyhole");
-                    if(json_Keyhole.length()>1) {
+                    if(!json_Keyhole.get("keyhole").toString().equals("[]")) {
                         JSONArray array_Keyhole = json_Keyhole.getJSONArray("keyhole");
                         data = gatherKeyMessage(array_Keyhole);
                         SendData.setKey(data);
@@ -365,7 +368,12 @@ public class paco {
                                 } catch (LSTFilterException e) {
                                     Log.d("LSTFilterException", e.toString());
                                 }
-                            } else{}
+                            } else{
+                                SendData.setPermission(false);
+                                SendData.setShowPoK(false);
+                                SendData.setMessage("");
+                                sendMQTT(SendData.getSendData());
+                            }
                         }catch (JSONException e){
                         }
                     }
@@ -505,10 +513,10 @@ public class paco {
         try {
             JSONObject data = new JSONObject();
             for(int i=0;i<jsonArray.length(); ++i) {
-                if(jsonArray.getString(i) == "location"){
+                if(jsonArray.getString(i).equals("Location")){
                     data.put("location", activity.getCurrentLocation());
-                } else if(jsonArray.getString(i) == "identity"){
-                    data.put("identity", activity.getClient());
+                } else if(jsonArray.getString(i).equals("Identity")){
+                    data.put("identity", activity.getTheCurrentClient());
                 }
             }
             return data;
@@ -524,37 +532,36 @@ public class paco {
                     bool2 = true;
             String location = null;
             String identity = null;
-            JSONObject json_key;
+            JSONObject json_key, json_key_temp;
 
-            if(jsonData.getString("key") != null){
-                json_key = jsonData.getJSONObject("key");
+            if(!jsonData.getString("key").equals("{}")){
+                json_key_temp = jsonData.getJSONObject("key");
+                json_key = json_key_temp.getJSONObject("key");
 
                 //String json_type = jsonData.getJSONObject("type").toString();
                 int level = privacySetting.getLevel(type);
                 ArrayList<String> needKey = privacySetting.getRequireType(level);
                 for(int i=0; i<needKey.size(); ++i){
-                    if(needKey.get(i)=="location"){
+                    if(needKey.get(i).equals("Location")){
                         location = json_key.getString("location");
                     }
                     else{
                         identity = json_key.getString("identity");////
+                        Log.d("check_identity",identity);
+                        //identity = "Stranger";////
                     }
                 }
             }
             if(location!=null){
-                if(CheckNearby(location)){bool1=true;}
-                else{bool1=false;}
+                bool1=CheckNearby(location);
             }else{
                 bool1=true;
             }
             if(identity!=null){
-//                if(CheckNearby(location)){bool1=true;}
-//                else{bool1=false;}
-                bool2 = true;
+                bool2=CheckIdentity(identity);
             } else {
                 bool2 = true;
             }
-
             return Boolean.toString(bool1&bool2);
 
         }catch (JSONException e){
@@ -573,7 +580,7 @@ public class paco {
         String[] otherLocationSplits = OtherLocation.split(",");
 
         if(!curLocation.equals(OtherLocation)){
-            if( Math.pow( (Double.valueOf(curLocSplits[0])-Double.valueOf(otherLocationSplits[0])), 2) + Math.pow( (Double.valueOf(curLocSplits[1])-Double.valueOf(otherLocationSplits[1])), 2) <= Math.pow(100, 2)){
+            if( Math.pow( (Double.valueOf(curLocSplits[0])-Double.valueOf(otherLocationSplits[0])), 2) + Math.pow( (Double.valueOf(curLocSplits[1])-Double.valueOf(otherLocationSplits[1])), 2) <= Math.pow(0.05, 2)){
                 return true;
             } else{
                 return false;
@@ -581,6 +588,17 @@ public class paco {
         } else{
             return false;
         }
+    }
+
+    private boolean CheckIdentity(String identity){
+        FriendStore friendStore = new FriendStore(activity);
+        List<FriendData> allFriends = friendStore.getFriends();
+        for(int i=0; i<allFriends.size(); ++i){
+            if(allFriends.get(i).getToken().equals(identity)){
+                return true;
+            }
+        }
+        return false;
     }
 
     //upadate Place

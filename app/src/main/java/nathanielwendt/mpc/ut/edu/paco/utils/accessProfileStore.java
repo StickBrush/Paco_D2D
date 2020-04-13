@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.AccessProfile;
+import nathanielwendt.mpc.ut.edu.paco.D2D.AccessProfile;
 
 public class accessProfileStore {
 

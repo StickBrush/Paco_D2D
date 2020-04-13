@@ -31,7 +31,7 @@ import java.util.Map;
 
 import nathanielwendt.mpc.ut.edu.paco.Data.UserData;
 import nathanielwendt.mpc.ut.edu.paco.Data.UserDataAdapter;
-import nathanielwendt.mpc.ut.edu.paco.fire_MQTT.sendData;
+import nathanielwendt.mpc.ut.edu.paco.D2D.sendData;
 
 public class RequestFragment extends Fragment {
 
@@ -72,7 +72,7 @@ public class RequestFragment extends Fragment {
         mSwitchCompat.setChecked(false);
 
         //spinner
-        final String[] type = {"Restaurant", "Park"};
+        final String[] type = {"Restaurant"/*, "Park"*/};
         final ArrayAdapter<String> typeList = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item,
                 type);request_type.setAdapter(typeList);

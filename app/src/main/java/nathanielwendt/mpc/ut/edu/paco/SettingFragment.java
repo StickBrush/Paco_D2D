@@ -26,7 +26,6 @@ public class SettingFragment extends Fragment {
     private Button btn_set_Name;
     private Button btn_set_key;
     private Button btn_key_config;
-    private FragmentHelper fHelper;
     private Spinner key_type;
     private Spinner key_level;
     private Spinner config_key_Level;
@@ -52,7 +51,7 @@ public class SettingFragment extends Fragment {
         btn_set_key = (Button) root.findViewById(R.id.btn_set_key);
         btn_key_config = (Button) root.findViewById(R.id.btn_key_config);
 
-        final String[] type = {"Restaurant", "Park"};
+        final String[] type = {"Restaurant"/*, "Park"*/};
         final ArrayAdapter<String> typeList = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_spinner_dropdown_item,
                 type);key_type.setAdapter(typeList);
@@ -90,7 +89,7 @@ public class SettingFragment extends Fragment {
             }
         });
 
-        //set key level
+        //set key level for topics
         btn_set_key.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -124,12 +123,12 @@ public class SettingFragment extends Fragment {
             public void onClick(View view) {
                 int level = Integer.parseInt(config_key_Level.getSelectedItem().toString());
                 boolean needIdentity, needLocation;
-                if(SharingIdentity.getSelectedItem().toString()=="Stranger"){
+                if(SharingIdentity.getSelectedItem().toString().equals("Stranger")){
                     needIdentity = false;
                 } else{
                     needIdentity = true;
                 }
-                if(SharingLocation.getSelectedItem().toString()=="Do Not Need Location") {
+                if(SharingLocation.getSelectedItem().toString().equals("Do Not Need Location")) {
                     needLocation = false;
                 } else{
                     needLocation = true;
